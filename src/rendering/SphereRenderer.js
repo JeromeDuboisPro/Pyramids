@@ -30,10 +30,8 @@ export class SphereRenderer {
 
         const radius = CONFIG.SPHERE_RADIUS;
 
-        // Only non-neutral spheres should glow
-        const isNeutral = (color === CONFIG.NEUTRAL_COLOR);
-
         // Use simpler materials for better iGPU compatibility
+        const isNeutral = (color === CONFIG.NEUTRAL_COLOR);
 
         // Outer glass shell - transparent with basic material
         const glassShellMaterial = new THREE.MeshStandardMaterial({
@@ -51,23 +49,21 @@ export class SphereRenderer {
         shellMesh.userData.isShell = true;
         group.add(shellMesh);
 
-        // Inner glowing core - only for owned spheres
-        if (!isNeutral) {
-            const coreRadius = radius * 0.6; // Larger core (60% instead of 50%)
-            const coreMaterial = new THREE.MeshStandardMaterial({
-                color: color,
-                emissive: color,
-                emissiveIntensity: 2.0,  // Very strong glow
-                transparent: false,      // Opaque core
-                metalness: 0.0,
-                roughness: 0.5
-            });
+        // Inner glowing core - ALL spheres have a core (neutral glows grey)
+        const coreRadius = radius * 0.6; // Larger core (60% instead of 50%)
+        const coreMaterial = new THREE.MeshStandardMaterial({
+            color: color,
+            emissive: color,
+            emissiveIntensity: isNeutral ? 0.8 : 2.0,  // Dimmer glow for neutral
+            transparent: false,      // Opaque core
+            metalness: 0.0,
+            roughness: 0.5
+        });
 
-            const coreGeometry = new THREE.SphereGeometry(coreRadius, 32, 32);
-            const coreMesh = new THREE.Mesh(coreGeometry, coreMaterial);
-            coreMesh.userData.isCore = true;
-            group.add(coreMesh);
-        }
+        const coreGeometry = new THREE.SphereGeometry(coreRadius, 32, 32);
+        const coreMesh = new THREE.Mesh(coreGeometry, coreMaterial);
+        coreMesh.userData.isCore = true;
+        group.add(coreMesh);
 
         // Only add point light and glow halo for non-neutral spheres
         if (!isNeutral) {
@@ -128,7 +124,8 @@ export class SphereRenderer {
                 if (child.userData.isCore) {
                     child.material.color.setHex(newColor);
                     child.material.emissive.setHex(newColor);
-                    child.material.emissiveIntensity = 2.0; // Will be pulsed by animation
+                    // Set base intensity: bright for owned, dim for neutral/capturing
+                    child.material.emissiveIntensity = isFullyOwned ? 2.0 : 0.8;
                     hasCore = true;
                     return;
                 }
@@ -144,33 +141,9 @@ export class SphereRenderer {
             }
         });
 
-        // Add or remove components based on fully owned state
-        if (isFullyOwned && !hasCore) {
-            // Becoming fully owned, add inner glowing core
-            const radius = CONFIG.SPHERE_RADIUS;
-            const coreRadius = radius * 0.6; // Match createSphere
-            const coreMaterial = new THREE.MeshStandardMaterial({
-                color: newColor,
-                emissive: newColor,
-                emissiveIntensity: 2.0,  // Match createSphere
-                transparent: false,      // Opaque
-                metalness: 0.0,
-                roughness: 0.5
-            });
-            const coreGeometry = new THREE.SphereGeometry(coreRadius, 32, 32);
-            const coreMesh = new THREE.Mesh(coreGeometry, coreMaterial);
-            coreMesh.userData.isCore = true;
-            sphereGroup.add(coreMesh);
-        } else if (!isFullyOwned && hasCore) {
-            // No longer fully owned, remove glowing core
-            const coreToRemove = sphereGroup.children.find(child => child.userData.isCore);
-            if (coreToRemove) {
-                coreToRemove.geometry.dispose();
-                coreToRemove.material.dispose();
-                sphereGroup.remove(coreToRemove);
-            }
-        }
+        // Core always exists now (added in createSphere), just update intensity above
 
+        // Add or remove point light and halo based on fully owned state
         if (isFullyOwned && !hasLight) {
             // Becoming fully owned, add point light and halo
             const pointLight = new THREE.PointLight(newColor, 1.5, 8);

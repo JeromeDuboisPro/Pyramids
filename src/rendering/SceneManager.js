@@ -170,17 +170,32 @@ export class SceneManager {
             let isOwnedSphere = false;
 
             sphereGroup.children.forEach(child => {
-                // Inner glowing core - dramatic pulse
+                // Inner glowing core - pulse all cores (neutral pulses dimmer)
                 if (child.userData.isCore && child.material.emissive) {
-                    isOwnedSphere = true;
                     const pulseSpeed = 1.2 + index * 0.05;
 
-                    // Pulse emissive intensity from very dark to very bright
-                    const minIntensity = 0.3;
-                    const maxIntensity = 2.5;
-                    const intensity = minIntensity + (maxIntensity - minIntensity) *
-                                    (0.5 + 0.5 * Math.sin(time * pulseSpeed));
-                    child.material.emissiveIntensity = intensity;
+                    // Get base intensity from material (2.0 for owned, 0.8 for neutral)
+                    const baseIntensity = child.material.emissiveIntensity;
+
+                    // Check if this is owned (bright) or neutral (dim)
+                    const isOwned = baseIntensity > 1.0;
+                    isOwnedSphere = isOwned;
+
+                    if (isOwned) {
+                        // Owned spheres: dramatic pulse from dark to very bright
+                        const minIntensity = 0.3;
+                        const maxIntensity = 2.5;
+                        const intensity = minIntensity + (maxIntensity - minIntensity) *
+                                        (0.5 + 0.5 * Math.sin(time * pulseSpeed));
+                        child.material.emissiveIntensity = intensity;
+                    } else {
+                        // Neutral spheres: subtle pulse (dim grey glow)
+                        const minIntensity = 0.5;
+                        const maxIntensity = 1.0;
+                        const intensity = minIntensity + (maxIntensity - minIntensity) *
+                                        (0.5 + 0.5 * Math.sin(time * pulseSpeed));
+                        child.material.emissiveIntensity = intensity;
+                    }
 
                     // Subtle size pulse for breathing effect
                     const pulseAmount = 0.05; // 5% variation
