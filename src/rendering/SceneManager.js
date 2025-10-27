@@ -45,7 +45,7 @@ export class SceneManager {
 
         // Enable tone mapping for emissive materials to glow properly
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        this.renderer.toneMappingExposure = 1.5; // Increase exposure for brighter glow
+        this.renderer.toneMappingExposure = 1.0; // Standard exposure (reduced from 1.5 for iGPU compatibility)
 
         // Set background color (deep space)
         this.renderer.setClearColor(CONFIG.BACKGROUND_COLOR);

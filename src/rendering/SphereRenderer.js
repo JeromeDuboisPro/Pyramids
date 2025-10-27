@@ -33,17 +33,17 @@ export class SphereRenderer {
         // Only non-neutral spheres should glow
         const isNeutral = (color === CONFIG.NEUTRAL_COLOR);
 
-        // Outer glass shell - transparent
-        const glassShellMaterial = new THREE.MeshPhysicalMaterial({
+        // Use simpler materials for better iGPU compatibility
+
+        // Outer glass shell - transparent with basic material
+        const glassShellMaterial = new THREE.MeshStandardMaterial({
             color: color,
             transparent: true,
-            opacity: 0.3,                // Very transparent
-            metalness: 0.0,
-            roughness: 0.1,              // Very smooth/glossy
-            transmission: 0.9,           // High transmission = glass-like
-            thickness: 0.5,
-            clearcoat: 1.0,              // Maximum glossy coating
-            clearcoatRoughness: 0.1
+            opacity: 0.4,                // Semi-transparent
+            metalness: 0.1,
+            roughness: 0.2,
+            emissive: 0x000000,          // No emissive on shell
+            emissiveIntensity: 0
         });
 
         const shellGeometry = new THREE.SphereGeometry(radius, 64, 64);
@@ -53,13 +53,14 @@ export class SphereRenderer {
 
         // Inner glowing core - only for owned spheres
         if (!isNeutral) {
-            const coreRadius = radius * 0.5; // Half size of outer shell
+            const coreRadius = radius * 0.6; // Larger core (60% instead of 50%)
             const coreMaterial = new THREE.MeshStandardMaterial({
                 color: color,
                 emissive: color,
-                emissiveIntensity: 1.5,  // Strong initial glow
-                transparent: true,
-                opacity: 0.9
+                emissiveIntensity: 2.0,  // Very strong glow
+                transparent: false,      // Opaque core
+                metalness: 0.0,
+                roughness: 0.5
             });
 
             const coreGeometry = new THREE.SphereGeometry(coreRadius, 32, 32);
@@ -127,7 +128,7 @@ export class SphereRenderer {
                 if (child.userData.isCore) {
                     child.material.color.setHex(newColor);
                     child.material.emissive.setHex(newColor);
-                    child.material.emissiveIntensity = 1.5; // Will be pulsed by animation
+                    child.material.emissiveIntensity = 2.0; // Will be pulsed by animation
                     hasCore = true;
                     return;
                 }
@@ -147,13 +148,14 @@ export class SphereRenderer {
         if (isFullyOwned && !hasCore) {
             // Becoming fully owned, add inner glowing core
             const radius = CONFIG.SPHERE_RADIUS;
-            const coreRadius = radius * 0.5;
+            const coreRadius = radius * 0.6; // Match createSphere
             const coreMaterial = new THREE.MeshStandardMaterial({
                 color: newColor,
                 emissive: newColor,
-                emissiveIntensity: 1.5,
-                transparent: true,
-                opacity: 0.9
+                emissiveIntensity: 2.0,  // Match createSphere
+                transparent: false,      // Opaque
+                metalness: 0.0,
+                roughness: 0.5
             });
             const coreGeometry = new THREE.SphereGeometry(coreRadius, 32, 32);
             const coreMesh = new THREE.Mesh(coreGeometry, coreMaterial);
