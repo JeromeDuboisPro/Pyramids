@@ -190,6 +190,13 @@ export class SceneManager {
      */
     updateConnectionStreams(gameState) {
         const activeConnections = gameState.getActiveConnections();
+
+        // Debug: Log when connection count changes
+        if (!this._lastConnectionCount || this._lastConnectionCount !== activeConnections.length) {
+            console.log(`🔗 Active connections: ${activeConnections.length}`);
+            this._lastConnectionCount = activeConnections.length;
+        }
+
         this.streamRenderer.updateStreams(activeConnections);
     }
 
