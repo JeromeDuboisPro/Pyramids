@@ -126,16 +126,28 @@ export class SphereRenderer {
 
         let resultColor = new THREE.Color();
 
-        if (energy < CONFIG.ENEMY_THRESHOLD) {
-            // Enemy to neutral transition (0-33%)
-            const t = energy / CONFIG.ENEMY_THRESHOLD;
+        // Define transition zones (10% buffer around thresholds for smooth gradients)
+        const enemyToNeutralStart = CONFIG.ENEMY_THRESHOLD - 10;
+        const enemyToNeutralEnd = CONFIG.ENEMY_THRESHOLD + 10;
+        const neutralToPlayerStart = CONFIG.NEUTRAL_THRESHOLD - 10;
+        const neutralToPlayerEnd = CONFIG.NEUTRAL_THRESHOLD + 10;
+
+        if (energy < enemyToNeutralStart) {
+            // Solid enemy color (0-23%)
+            resultColor = enemyColor;
+        } else if (energy < enemyToNeutralEnd) {
+            // Enemy to neutral transition (23-43%)
+            const t = (energy - enemyToNeutralStart) / 20;
             resultColor.lerpColors(enemyColor, neutralColor, t);
-        } else if (energy < CONFIG.NEUTRAL_THRESHOLD) {
-            // Neutral to player transition (33-67%)
-            const t = (energy - CONFIG.ENEMY_THRESHOLD) / (CONFIG.NEUTRAL_THRESHOLD - CONFIG.ENEMY_THRESHOLD);
+        } else if (energy < neutralToPlayerStart) {
+            // Solid neutral color (43-57%)
+            resultColor = neutralColor;
+        } else if (energy < neutralToPlayerEnd) {
+            // Neutral to player transition (57-77%)
+            const t = (energy - neutralToPlayerStart) / 20;
             resultColor.lerpColors(neutralColor, playerColor, t);
         } else {
-            // Player owned (67-100%)
+            // Solid player color (77-100%)
             resultColor = playerColor;
         }
 
