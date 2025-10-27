@@ -81,7 +81,11 @@ export class SphereRenderer {
      * @param {number} intensity - Unused (kept for compatibility)
      */
     updateSphereColor(sphereGroup, newColor, intensity = 1.0) {
-        const isNeutral = (newColor === CONFIG.NEUTRAL_COLOR);
+        // Check if this is a fully owned sphere (not neutral, not interpolated capture color)
+        const isPlayerOwned = (newColor === CONFIG.PLAYER_COLOR);
+        const isEnemyOwned = (newColor === CONFIG.ENEMY_COLOR);
+        const isFullyOwned = isPlayerOwned || isEnemyOwned;
+
         let hasLight = false;
         let hasHalo = false;
 
@@ -100,14 +104,14 @@ export class SphereRenderer {
                 // Update sphere color
                 child.material.color.setHex(newColor);
 
-                // Only set emissive for non-neutral spheres
+                // Only set emissive for fully owned spheres
                 if (child.material.emissive) {
-                    if (isNeutral) {
-                        child.material.emissive.setHex(0x000000); // No glow for neutral
-                        child.material.emissiveIntensity = 0;
-                    } else {
-                        child.material.emissive.setHex(newColor); // Glow for owned spheres
+                    if (isFullyOwned) {
+                        child.material.emissive.setHex(newColor); // Glow for fully owned spheres
                         child.material.emissiveIntensity = 1.2;
+                    } else {
+                        child.material.emissive.setHex(0x000000); // No glow during capture
+                        child.material.emissiveIntensity = 0;
                     }
                 }
             } else if (child.isLight) {
@@ -117,9 +121,9 @@ export class SphereRenderer {
             }
         });
 
-        // Add or remove point light and halo based on neutral state
-        if (!isNeutral && !hasLight) {
-            // Becoming non-neutral, add point light and halo
+        // Add or remove point light and halo based on fully owned state
+        if (isFullyOwned && !hasLight) {
+            // Becoming fully owned, add point light and halo
             const pointLight = new THREE.PointLight(newColor, 1.5, 8);
             pointLight.position.set(0, 0, 0);
             sphereGroup.add(pointLight);
@@ -137,8 +141,8 @@ export class SphereRenderer {
             haloMesh.rotation.x = Math.PI / 2;
             haloMesh.userData.isHalo = true;
             sphereGroup.add(haloMesh);
-        } else if (isNeutral && (hasLight || hasHalo)) {
-            // Becoming neutral, remove point light and halo
+        } else if (!isFullyOwned && (hasLight || hasHalo)) {
+            // No longer fully owned (neutral or being captured), remove point light and halo
             const lightToRemove = sphereGroup.children.find(child => child.isLight);
             if (lightToRemove) {
                 sphereGroup.remove(lightToRemove);

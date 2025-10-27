@@ -233,12 +233,15 @@ export class GameState {
             if (source.owner === target.owner) {
                 // Same owner: maintain at 100% (already owned)
                 target.energy = 100;
+                target.attackingOwner = null; // Not being attacked
             } else if (target.owner === 'neutral') {
                 // Capturing neutral: 0% → 100%
+                target.attackingOwner = source.owner; // Track who's attacking
                 target.energy += energyAmount;
                 if (target.energy >= 100) {
                     target.energy = 100;
                     target.owner = source.owner; // Capture!
+                    target.attackingOwner = null; // Capture complete
 
                     if (source.owner === 'player') {
                         this.stats.spheresCaptured++;
@@ -247,10 +250,12 @@ export class GameState {
                 this.stats.energyTransferred += energyAmount;
             } else {
                 // Attacking owned sphere: 100% → 0% (becomes neutral)
+                target.attackingOwner = source.owner; // Track who's attacking
                 target.energy -= energyAmount;
                 if (target.energy <= 0) {
                     target.energy = 0;
                     target.owner = 'neutral'; // Lost, reverts to neutral
+                    target.attackingOwner = null; // Attack complete (now neutral)
                 }
                 this.stats.energyTransferred += energyAmount;
             }

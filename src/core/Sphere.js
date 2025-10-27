@@ -5,6 +5,7 @@
  * Each sphere has energy level (0-100%), ownership, and can connect to one other sphere.
  */
 
+import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
 import { CONFIG } from '../main.js';
 
 export class Sphere {
@@ -25,6 +26,9 @@ export class Sphere {
         this.connectedTo = null; // Target sphere ID (ONE connection only)
         this.lastTransferTime = 0;
 
+        // Capture state (for visual interpolation)
+        this.attackingOwner = null; // Who is currently attacking this sphere
+
         // Visual reference (will be set by renderer)
         this.mesh = null;
     }
@@ -42,6 +46,34 @@ export class Sphere {
         if (this.owner === 'enemy') {
             return CONFIG.ENEMY_COLOR;
         }
+        return CONFIG.NEUTRAL_COLOR;
+    }
+
+    /**
+     * Get interpolated color showing capture progress
+     * During capture: interpolates from neutral to attacker's color
+     * @returns {number} Hex color value
+     */
+    getInterpolatedColor() {
+        // If fully owned, return owner color
+        if (this.owner !== 'neutral') {
+            return this.getColor();
+        }
+
+        // If neutral and being attacked, interpolate based on energy
+        if (this.attackingOwner && this.energy > 0) {
+            const neutralColor = new THREE.Color(CONFIG.NEUTRAL_COLOR);
+            const attackerColor = new THREE.Color(
+                this.attackingOwner === 'player' ? CONFIG.PLAYER_COLOR : CONFIG.ENEMY_COLOR
+            );
+
+            // Interpolate from neutral (0%) to attacker color (100%)
+            const t = this.energy / 100; // 0 to 1
+            const resultColor = new THREE.Color().lerpColors(neutralColor, attackerColor, t);
+            return resultColor.getHex();
+        }
+
+        // Default: neutral color
         return CONFIG.NEUTRAL_COLOR;
     }
 
@@ -130,6 +162,7 @@ export class Sphere {
         );
         cloned.connectedTo = this.connectedTo;
         cloned.lastTransferTime = this.lastTransferTime;
+        cloned.attackingOwner = this.attackingOwner;
         return cloned;
     }
 
@@ -147,7 +180,8 @@ export class Sphere {
             },
             owner: this.owner,
             energy: this.energy,
-            connectedTo: this.connectedTo
+            connectedTo: this.connectedTo,
+            attackingOwner: this.attackingOwner
         };
     }
 
@@ -171,6 +205,7 @@ export class Sphere {
         );
 
         sphere.connectedTo = data.connectedTo;
+        sphere.attackingOwner = data.attackingOwner || null;
         return sphere;
     }
 

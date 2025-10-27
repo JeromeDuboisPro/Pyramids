@@ -229,16 +229,15 @@ export class SceneManager {
     }
 
     /**
-     * Update sphere colors based on ownership
-     * Color represents owner (player/enemy/neutral)
-     * Energy level shown via tooltip, not color
+     * Update sphere colors based on ownership and capture progress
+     * Shows interpolated color during capture for visual feedback
      * @param {GameState} gameState - Current game state
      */
     updateSphereColors(gameState) {
         gameState.getAllSpheres().forEach(sphere => {
             if (sphere.mesh) {
-                // Get color based on owner
-                const color = sphere.getColor();
+                // Get interpolated color showing capture progress
+                const color = sphere.getInterpolatedColor();
 
                 // Update sphere visual
                 this.sphereRenderer.updateSphereColor(sphere.mesh, color, 1.0);
