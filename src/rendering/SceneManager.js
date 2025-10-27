@@ -93,7 +93,34 @@ export class SceneManager {
     }
 
     /**
+     * Create visual spheres from GameState
+     * @param {GameState} gameState - Game state containing sphere entities
+     */
+    createSpheresFromGameState(gameState) {
+        // Clear existing spheres
+        this.sphereMeshes = [];
+
+        // Create visual sphere for each game state sphere
+        gameState.getAllSpheres().forEach(sphereEntity => {
+            const color = sphereEntity.getColor();
+
+            const sphereMesh = this.sphereRenderer.createSphere(
+                sphereEntity.position,
+                color,
+                sphereEntity.id
+            );
+
+            // Link mesh to entity
+            sphereEntity.mesh = sphereMesh;
+            this.sphereMeshes.push(sphereMesh);
+        });
+
+        console.log(`✅ Created ${this.sphereMeshes.length} visual spheres from game state`);
+    }
+
+    /**
      * Create test spheres for Phase 1 (7 spheres in circular pattern)
+     * @deprecated Use createSpheresFromGameState instead
      */
     createTestSpheres() {
         const sphereCount = 7;

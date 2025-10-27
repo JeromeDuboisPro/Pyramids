@@ -7,6 +7,7 @@
 import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
 import { SceneManager } from './rendering/SceneManager.js';
 import { ColorThemeManager } from './ui/ColorThemes.js';
+import { GameState } from './core/GameState.js';
 
 // Game configuration constants
 export const CONFIG = {
@@ -41,6 +42,9 @@ class Game {
         this.canvas = document.getElementById('game-canvas');
         this.loading = document.getElementById('loading');
 
+        // Initialize game state
+        this.state = new GameState();
+
         // Initialize rendering
         this.sceneManager = new SceneManager(this.canvas);
 
@@ -62,8 +66,11 @@ class Game {
         // Setup event listeners
         window.addEventListener('resize', this.onWindowResize);
 
-        // Initialize scene with test spheres
-        this.sceneManager.createTestSpheres();
+        // Create puzzle layout in game state
+        this.state.createPuzzleLayout();
+
+        // Create visual spheres from game state
+        this.sceneManager.createSpheresFromGameState(this.state);
 
         // Initialize color theme manager
         this.colorThemeManager = new ColorThemeManager(this.sceneManager);
@@ -72,6 +79,9 @@ class Game {
         this.loading.classList.add('hidden');
 
         console.log('✅ Game initialized successfully');
+
+        // Debug: dump game state
+        this.state.debugDump();
 
         // Start game loop
         this.start();
@@ -122,11 +132,14 @@ class Game {
      * @param {number} deltaTime - Time since last frame (seconds)
      */
     update(deltaTime) {
-        // Phase 1: No updates yet, just rendering
-        // Phase 2+: Will update game state, energy transfers, etc.
+        // Update game state logic
+        this.state.update(deltaTime);
 
-        // Animate spheres (subtle pulsing for now)
+        // Update visual animations
         this.sceneManager.updateSphereAnimations(deltaTime);
+
+        // Phase 1.5+: Energy transfer visualization
+        // Phase 1.4+: Connection pulse rendering
     }
 
     /**
