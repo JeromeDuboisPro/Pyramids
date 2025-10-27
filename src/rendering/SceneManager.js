@@ -163,13 +163,13 @@ export class SceneManager {
         const time = performance.now() * 0.001; // Convert to seconds
 
         this.sphereMeshes.forEach((sphereGroup, index) => {
-            // Subtle pulse effect (glow layer scales slightly)
-            const glowLayer = sphereGroup.children[1]; // Second layer is glow
-            if (glowLayer) {
+            // Subtle pulse effect on sphere itself
+            const sphereMesh = sphereGroup.children[0]; // First child is the sphere mesh
+            if (sphereMesh && sphereMesh.isMesh) {
                 const pulseSpeed = 1.0 + index * 0.1; // Slightly different speeds
-                const pulseAmount = 0.05; // 5% size variation
+                const pulseAmount = 0.03; // 3% size variation (subtle)
                 const scale = 1.0 + Math.sin(time * pulseSpeed) * pulseAmount;
-                glowLayer.scale.setScalar(scale);
+                sphereMesh.scale.setScalar(scale);
             }
 
             // Subtle rotation (very slow)

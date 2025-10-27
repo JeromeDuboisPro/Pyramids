@@ -17,11 +17,11 @@ export class SphereRenderer {
     }
 
     /**
-     * Create a glowing sphere with 3-layer effect
+     * Create a 3D translucent sphere
      * @param {THREE.Vector3} position - Position in world space
      * @param {number} color - Hex color value
      * @param {string} id - Unique identifier for this sphere
-     * @returns {THREE.Group} Group containing all sphere layers
+     * @returns {THREE.Group} Group containing sphere
      */
     createSphere(position, color, id) {
         const group = new THREE.Group();
@@ -30,56 +30,26 @@ export class SphereRenderer {
 
         const radius = CONFIG.SPHERE_RADIUS;
 
-        // Layer 1: Core sphere (solid, emissive)
-        const coreMaterial = new THREE.MeshStandardMaterial({
-            color: color,
-            emissive: color,
-            emissiveIntensity: 1.0,
-            metalness: 0.2,
-            roughness: 0.4
-        });
-
-        const coreGeometry = new THREE.SphereGeometry(radius, 32, 32);
-        const coreMesh = new THREE.Mesh(coreGeometry, coreMaterial);
-        group.add(coreMesh);
-
-        // Layer 2: Glow layer (transparent, additive blending)
-        const glowMaterial = new THREE.MeshBasicMaterial({
+        // Single translucent sphere with glass-like appearance
+        const sphereMaterial = new THREE.MeshPhysicalMaterial({
             color: color,
             transparent: true,
-            opacity: 0.3,
-            blending: THREE.AdditiveBlending,
-            side: THREE.FrontSide
+            opacity: 0.7,
+            metalness: 0.1,
+            roughness: 0.2,
+            transmission: 0.3,      // Glass-like light transmission
+            thickness: 0.5,         // Refraction thickness
+            clearcoat: 0.5,         // Glossy outer coat
+            clearcoatRoughness: 0.1
         });
 
-        const glowGeometry = new THREE.SphereGeometry(
-            radius * CONFIG.GLOW_MULTIPLIER,
-            32,
-            32
-        );
-        const glowMesh = new THREE.Mesh(glowGeometry, glowMaterial);
-        group.add(glowMesh);
+        const sphereGeometry = new THREE.SphereGeometry(radius, 64, 64); // High segments for smooth 3D
+        const sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        group.add(sphereMesh);
 
-        // Layer 3: Halo (very transparent, soft outer glow)
-        const haloMaterial = new THREE.MeshBasicMaterial({
-            color: color,
-            transparent: true,
-            opacity: 0.1,
-            blending: THREE.AdditiveBlending,
-            side: THREE.FrontSide
-        });
-
-        const haloGeometry = new THREE.SphereGeometry(
-            radius * CONFIG.GLOW_MULTIPLIER * 1.3,
-            32,
-            32
-        );
-        const haloMesh = new THREE.Mesh(haloGeometry, haloMaterial);
-        group.add(haloMesh);
-
-        // Add point light at sphere position for extra glow effect
-        const pointLight = new THREE.PointLight(color, 0.5, 5);
-        pointLight.position.set(0, 0, 0); // Relative to group
+        // Subtle point light for depth
+        const pointLight = new THREE.PointLight(color, 0.3, 3);
+        pointLight.position.set(0, 0, 0);
         group.add(pointLight);
 
         // Add to scene
@@ -89,24 +59,16 @@ export class SphereRenderer {
     }
 
     /**
-     * Update sphere color (for energy transfer visualization)
+     * Update sphere color
      * @param {THREE.Group} sphereGroup - The sphere group to update
      * @param {number} newColor - New hex color value
-     * @param {number} intensity - Emissive intensity (0-1)
+     * @param {number} intensity - Unused (kept for compatibility)
      */
     updateSphereColor(sphereGroup, newColor, intensity = 1.0) {
-        // Update all layers
-        sphereGroup.children.forEach((child, index) => {
+        sphereGroup.children.forEach((child) => {
             if (child.isMesh && child.material) {
-                if (index === 0) {
-                    // Core: Update both color and emissive
-                    child.material.color.setHex(newColor);
-                    child.material.emissive.setHex(newColor);
-                    child.material.emissiveIntensity = intensity;
-                } else {
-                    // Glow and halo: Update color only
-                    child.material.color.setHex(newColor);
-                }
+                // Update sphere color
+                child.material.color.setHex(newColor);
             } else if (child.isLight) {
                 // Update point light color
                 child.color.setHex(newColor);
