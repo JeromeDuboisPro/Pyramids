@@ -42,6 +42,8 @@ class Game {
     constructor() {
         this.canvas = document.getElementById('game-canvas');
         this.loading = document.getElementById('loading');
+        this.victoryScreen = document.getElementById('victory-screen');
+        this.restartBtn = document.getElementById('restart-btn');
 
         // Initialize game state
         this.state = new GameState();
@@ -52,10 +54,12 @@ class Game {
         // Game loop tracking
         this.lastTime = 0;
         this.isRunning = false;
+        this.hasWon = false;
 
         // Bind methods
         this.loop = this.loop.bind(this);
         this.onWindowResize = this.onWindowResize.bind(this);
+        this.restart = this.restart.bind(this);
     }
 
     /**
@@ -83,6 +87,9 @@ class Game {
 
         // Initialize color theme manager
         this.colorThemeManager = new ColorThemeManager(this.sceneManager);
+
+        // Setup restart button
+        this.restartBtn.addEventListener('click', this.restart);
 
         // Hide loading screen
         this.loading.classList.add('hidden');
@@ -155,6 +162,11 @@ class Game {
 
         // Update HUD
         this.updateHUD();
+
+        // Check victory condition
+        if (!this.hasWon && this.state.checkVictory()) {
+            this.showVictory();
+        }
     }
 
     /**
@@ -194,6 +206,74 @@ class Game {
                 `;
             }
         }
+    }
+
+    /**
+     * Show victory screen
+     */
+    showVictory() {
+        this.hasWon = true;
+        this.victoryScreen.classList.remove('hidden');
+        console.log('🏆 VICTORY! All spheres captured!');
+
+        // Display final stats in victory screen
+        const stats = this.state.getStats();
+        const victoryStatsEl = document.getElementById('victory-stats');
+        victoryStatsEl.innerHTML = `
+            <div style="color: #00D9FF;">⏱️ Time: ${stats.gameTime}s</div>
+            <div style="color: #FF6B35; margin-top: 10px;">🎯 Spheres Captured: ${stats.spheresCaptured}</div>
+            <div style="color: #00D9FF; margin-top: 10px;">🔗 Connections Created: ${stats.connectionsCreated}</div>
+            <div style="color: #FF6B35; margin-top: 10px;">⚡ Energy Transferred: ${stats.energyTransferred.toFixed(0)}%</div>
+        `;
+
+        // Log final stats
+        console.log('📊 Final Stats:', {
+            gameTime: stats.gameTime,
+            spheresCaptured: stats.spheresCaptured,
+            energyTransferred: stats.energyTransferred.toFixed(1),
+            totalConnections: stats.connectionsCreated
+        });
+    }
+
+    /**
+     * Restart the game
+     */
+    restart() {
+        console.log('🔄 Restarting game...');
+
+        // Hide victory screen
+        this.victoryScreen.classList.add('hidden');
+        this.hasWon = false;
+
+        // Clear all connections
+        this.state.getAllSpheres().forEach(sphere => {
+            sphere.disconnect();
+        });
+
+        // Clear visual streams
+        this.sceneManager.streamRenderer.clearAllStreams();
+
+        // Reset game state
+        this.state.reset();
+
+        // Recreate puzzle layout
+        this.state.createPuzzleLayout();
+
+        // Recreate visual spheres
+        this.sceneManager.sphereMeshes.forEach(mesh => {
+            this.sceneManager.scene.remove(mesh);
+        });
+        this.sceneManager.createSpheresFromGameState(this.state);
+
+        // Reset input handler (deselect any sphere)
+        if (this.inputHandler.gameState.getSelectedSphere()) {
+            this.inputHandler.deselectSphere();
+        }
+
+        // Reset game time
+        this.lastTime = performance.now();
+
+        console.log('✅ Game restarted successfully');
     }
 
     /**
