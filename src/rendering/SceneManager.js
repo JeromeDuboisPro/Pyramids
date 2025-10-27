@@ -43,6 +43,10 @@ export class SceneManager {
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Limit for performance
 
+        // Enable tone mapping for emissive materials to glow properly
+        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        this.renderer.toneMappingExposure = 1.5; // Increase exposure for brighter glow
+
         // Set background color (deep space)
         this.renderer.setClearColor(CONFIG.BACKGROUND_COLOR);
 
