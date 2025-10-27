@@ -30,25 +30,27 @@ export class SphereRenderer {
 
         const radius = CONFIG.SPHERE_RADIUS;
 
-        // Single translucent sphere with glass-like appearance
+        // Translucent sphere with internal glow
         const sphereMaterial = new THREE.MeshPhysicalMaterial({
             color: color,
+            emissive: color,           // Internal glow color
+            emissiveIntensity: 0.8,    // Glow strength
             transparent: true,
-            opacity: 0.7,
+            opacity: 0.8,
             metalness: 0.1,
-            roughness: 0.2,
-            transmission: 0.3,      // Glass-like light transmission
-            thickness: 0.5,         // Refraction thickness
-            clearcoat: 0.5,         // Glossy outer coat
-            clearcoatRoughness: 0.1
+            roughness: 0.3,
+            transmission: 0.2,         // Glass-like light transmission
+            thickness: 0.5,            // Refraction thickness
+            clearcoat: 0.3,            // Glossy outer coat
+            clearcoatRoughness: 0.2
         });
 
         const sphereGeometry = new THREE.SphereGeometry(radius, 64, 64); // High segments for smooth 3D
         const sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
         group.add(sphereMesh);
 
-        // Subtle point light for depth
-        const pointLight = new THREE.PointLight(color, 0.3, 3);
+        // Point light for glow effect
+        const pointLight = new THREE.PointLight(color, 0.8, 6);
         pointLight.position.set(0, 0, 0);
         group.add(pointLight);
 
@@ -59,7 +61,7 @@ export class SphereRenderer {
     }
 
     /**
-     * Update sphere color
+     * Update sphere color and glow
      * @param {THREE.Group} sphereGroup - The sphere group to update
      * @param {number} newColor - New hex color value
      * @param {number} intensity - Unused (kept for compatibility)
@@ -67,8 +69,9 @@ export class SphereRenderer {
     updateSphereColor(sphereGroup, newColor, intensity = 1.0) {
         sphereGroup.children.forEach((child) => {
             if (child.isMesh && child.material) {
-                // Update sphere color
+                // Update sphere color and emissive glow
                 child.material.color.setHex(newColor);
+                child.material.emissive.setHex(newColor);
             } else if (child.isLight) {
                 // Update point light color
                 child.color.setHex(newColor);
