@@ -176,6 +176,16 @@ export class SceneManager {
                 sphereMesh.scale.setScalar(scale);
             }
 
+            // Animate halo glow (breathing effect)
+            sphereGroup.children.forEach(child => {
+                if (child.userData.isHalo) {
+                    const pulseSpeed = 1.5;
+                    const opacityBase = 0.3;
+                    const opacityVariation = 0.15;
+                    child.material.opacity = opacityBase + Math.sin(time * pulseSpeed) * opacityVariation;
+                }
+            });
+
             // Subtle rotation (very slow)
             sphereGroup.rotation.z += deltaTime * 0.1;
         });
@@ -190,13 +200,6 @@ export class SceneManager {
      */
     updateConnectionStreams(gameState) {
         const activeConnections = gameState.getActiveConnections();
-
-        // Debug: Log when connection count changes
-        if (!this._lastConnectionCount || this._lastConnectionCount !== activeConnections.length) {
-            console.log(`🔗 Active connections: ${activeConnections.length}`);
-            this._lastConnectionCount = activeConnections.length;
-        }
-
         this.streamRenderer.updateStreams(activeConnections);
     }
 

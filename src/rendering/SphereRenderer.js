@@ -47,11 +47,25 @@ export class SphereRenderer {
         const sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
         group.add(sphereMesh);
 
-        // Only add point light for non-neutral spheres (glowing effect)
+        // Only add point light and glow halo for non-neutral spheres
         if (!isNeutral) {
             const pointLight = new THREE.PointLight(color, 1.5, 8);
             pointLight.position.set(0, 0, 0);
             group.add(pointLight);
+
+            // Add visible glow halo (flat circle visible from top-down)
+            const haloGeometry = new THREE.RingGeometry(radius * 1.1, radius * 1.6, 32);
+            const haloMaterial = new THREE.MeshBasicMaterial({
+                color: color,
+                transparent: true,
+                opacity: 0.3,
+                side: THREE.DoubleSide,
+                blending: THREE.AdditiveBlending
+            });
+            const haloMesh = new THREE.Mesh(haloGeometry, haloMaterial);
+            haloMesh.rotation.x = Math.PI / 2; // Lay flat (visible from top)
+            haloMesh.userData.isHalo = true;
+            group.add(haloMesh);
         }
 
         // Add to scene
@@ -69,11 +83,19 @@ export class SphereRenderer {
     updateSphereColor(sphereGroup, newColor, intensity = 1.0) {
         const isNeutral = (newColor === CONFIG.NEUTRAL_COLOR);
         let hasLight = false;
+        let hasHalo = false;
 
         sphereGroup.children.forEach((child) => {
             if (child.isMesh && child.material) {
-                // Skip outline mesh (doesn't have emissive)
+                // Skip outline mesh
                 if (child.userData.isOutline) return;
+
+                // Update halo color
+                if (child.userData.isHalo) {
+                    child.material.color.setHex(newColor);
+                    hasHalo = true;
+                    return;
+                }
 
                 // Update sphere color
                 child.material.color.setHex(newColor);
@@ -95,17 +117,38 @@ export class SphereRenderer {
             }
         });
 
-        // Add or remove point light based on neutral state
+        // Add or remove point light and halo based on neutral state
         if (!isNeutral && !hasLight) {
-            // Becoming non-neutral, add point light
+            // Becoming non-neutral, add point light and halo
             const pointLight = new THREE.PointLight(newColor, 1.5, 8);
             pointLight.position.set(0, 0, 0);
             sphereGroup.add(pointLight);
-        } else if (isNeutral && hasLight) {
-            // Becoming neutral, remove point light
+
+            const radius = CONFIG.SPHERE_RADIUS;
+            const haloGeometry = new THREE.RingGeometry(radius * 1.1, radius * 1.6, 32);
+            const haloMaterial = new THREE.MeshBasicMaterial({
+                color: newColor,
+                transparent: true,
+                opacity: 0.3,
+                side: THREE.DoubleSide,
+                blending: THREE.AdditiveBlending
+            });
+            const haloMesh = new THREE.Mesh(haloGeometry, haloMaterial);
+            haloMesh.rotation.x = Math.PI / 2;
+            haloMesh.userData.isHalo = true;
+            sphereGroup.add(haloMesh);
+        } else if (isNeutral && (hasLight || hasHalo)) {
+            // Becoming neutral, remove point light and halo
             const lightToRemove = sphereGroup.children.find(child => child.isLight);
             if (lightToRemove) {
                 sphereGroup.remove(lightToRemove);
+            }
+
+            const haloToRemove = sphereGroup.children.find(child => child.userData.isHalo);
+            if (haloToRemove) {
+                haloToRemove.geometry.dispose();
+                haloToRemove.material.dispose();
+                sphereGroup.remove(haloToRemove);
             }
         }
     }
