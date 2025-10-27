@@ -78,28 +78,35 @@
 **Core Rules**:
 1. Each sphere PRODUCES energy based on its owner
 2. When connected, sphere transfers production to target WITHOUT losing own energy
-3. Ownership is PERSISTENT until fully captured (0% or 100%)
-4. Energy % represents the player/enemy contest balance, not sphere health
+3. Energy represents CAPTURE PROGRESS (0% = neutral, 100% = owned)
+4. Neutral spheres are BUFFER ZONES - must fully capture to change ownership
 
 **Energy Range**: 0% - 100% per sphere
 
 **Ownership Rules**:
 ```
-Owner field only changes at extremes:
-  0%   → Captured by enemy
-  100% → Captured by player
+0%   = Neutral (unowned buffer zone)
+1-99% = Capture in progress (color unchanged)
+100%  = Fully owned by attacker
 
-Owner persists otherwise:
-  10% player-owned sphere = still player-owned (being attacked, not captured)
-  90% enemy-owned sphere  = still enemy-owned (dominating, not lost)
+Battle Flow:
+1. Player attacks neutral (0%) → pumps to 100% → player owns
+2. Enemy attacks player (100%) → drains to 0% → becomes neutral
+3. Enemy captures neutral (0%) → pumps to 100% → enemy owns
 ```
 
 **Energy Production**:
 ```javascript
-Player-owned sphere: produces +15% per second (player energy)
-Enemy-owned sphere:  produces -15% per second (enemy energy)
-Neutral sphere:      produces 0% (no energy generation)
+Player-owned sphere: produces energy toward player capture
+Enemy-owned sphere:  produces energy toward enemy capture
+Neutral sphere:      produces 0% (no energy, passive)
 ```
+
+**Strategic Implications**:
+- Must fully capture (100%) to own a neutral sphere
+- Lost spheres revert to neutral (0%), not instant enemy capture
+- Creates "neutral buffer zone" between contested territories
+- Neutral spheres are strategic prizes with no allegiance
 
 **Transfer Rate** (with distance attenuation):
 ```javascript

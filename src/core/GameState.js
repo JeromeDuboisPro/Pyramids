@@ -210,7 +210,7 @@ export class GameState {
 
     /**
      * Process energy transfer for all active connections
-     * Each sphere produces energy based on its owner and transfers to target
+     * Energy represents capture progress (0% = neutral, 100% = owned)
      * Source maintains its energy - does NOT lose energy when transferring
      * @param {number} deltaTime - Time since last frame (seconds)
      */
@@ -220,43 +220,45 @@ export class GameState {
         connections.forEach(conn => {
             const { source, target, distance } = conn;
 
+            // Only owned spheres produce energy (neutral = 0 production)
+            if (source.owner === 'neutral') return;
+
             // Calculate energy transfer rate using inverse square attenuation
-            // Formula: effectiveRate = BASE_ENERGY_RATE / (1 + distance² × ATTENUATION_FACTOR)
             const effectiveRate = CONFIG.BASE_ENERGY_RATE /
                 (1 + distance * distance * CONFIG.ATTENUATION_FACTOR);
 
-            // Scale by deltaTime (convert from per-second to per-frame)
             const energyAmount = effectiveRate * deltaTime;
 
-            // Determine energy direction based on source owner
-            // Player-owned: adds player energy (+)
-            // Enemy-owned: adds enemy energy (-)
-            // Neutral: no energy production
-            let transferAmount = 0;
-            if (source.owner === 'player') {
-                transferAmount = energyAmount;  // Positive = player energy
-            } else if (source.owner === 'enemy') {
-                transferAmount = -energyAmount; // Negative = enemy energy
+            // Apply energy transfer based on ownership relationship
+            if (source.owner === target.owner) {
+                // Same owner: maintain at 100% (already owned)
+                target.energy = 100;
+            } else if (target.owner === 'neutral') {
+                // Capturing neutral: 0% → 100%
+                target.energy += energyAmount;
+                if (target.energy >= 100) {
+                    target.energy = 100;
+                    target.owner = source.owner; // Capture!
+
+                    if (source.owner === 'player') {
+                        this.stats.spheresCaptured++;
+                    }
+                }
+                this.stats.energyTransferred += energyAmount;
+            } else {
+                // Attacking owned sphere: 100% → 0% (becomes neutral)
+                target.energy -= energyAmount;
+                if (target.energy <= 0) {
+                    target.energy = 0;
+                    target.owner = 'neutral'; // Lost, reverts to neutral
+                }
+                this.stats.energyTransferred += energyAmount;
             }
-            // Neutral spheres produce no energy
 
-            // Transfer energy to target (source keeps its own energy)
-            if (transferAmount !== 0) {
-                target.transferEnergy(transferAmount);
-                this.stats.energyTransferred += Math.abs(transferAmount);
-            }
-
-            // Update ownership only for target (based on energy thresholds)
-            const targetOwnershipChanged = target.updateOwnership();
-
-            if (targetOwnershipChanged && target.mesh) {
+            // Update visual if ownership changed
+            if (target.mesh) {
                 target.mesh.userData.needsColorUpdate = true;
                 target.mesh.userData.targetColor = target.getColor();
-
-                // Track sphere captures
-                if (target.owner === 'player') {
-                    this.stats.spheresCaptured++;
-                }
             }
         });
     }
@@ -328,7 +330,7 @@ export class GameState {
                 `sphere-${i}`,
                 new THREE.Vector3(x, y, 0),
                 'neutral',
-                50.0 // Neutral energy
+                0.0 // Neutral = 0% (unowned buffer zone)
             );
             this.addSphere(sphere);
         }

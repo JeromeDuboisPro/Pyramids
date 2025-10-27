@@ -47,20 +47,20 @@ export class Sphere {
 
     /**
      * Update ownership based on energy level
-     * Ownership is persistent - only changes when fully captured
-     * 0% = enemy captures, 100% = player captures
-     * Energy represents the contest balance, not ownership
+     * 0% = neutral (unowned buffer zone)
+     * 100% = captured by whoever pumped energy
+     * Energy represents capture progress
      */
     updateOwnership() {
         const prevOwner = this.owner;
 
-        // Only change ownership at extremes (fully captured)
+        // Ownership based on energy thresholds
         if (this.energy <= 0) {
-            this.owner = 'enemy';
+            this.owner = 'neutral';
         } else if (this.energy >= 100) {
-            this.owner = 'player';
+            // Keep current owner (already set during capture)
+            // This method is mostly for validation
         }
-        // Otherwise keep existing owner (persistent ownership)
 
         // Return true if ownership changed
         return prevOwner !== this.owner;
