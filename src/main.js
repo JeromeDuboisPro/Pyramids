@@ -144,14 +144,16 @@ class Game {
         // Update game state logic
         this.state.update(deltaTime);
 
-        // Update visual animations
+        // Update connection streams visualization
+        this.sceneManager.updateConnectionStreams(this.state);
+
+        // Update visual animations (spheres + streams)
         this.sceneManager.updateSphereAnimations(deltaTime);
 
         // Update HUD
         this.updateHUD();
 
-        // Phase 1.5+: Energy transfer visualization
-        // Phase 1.4+: Connection pulse rendering
+        // Phase 1.5+: Energy transfer logic and color changes
     }
 
     /**

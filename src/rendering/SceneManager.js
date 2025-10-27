@@ -7,6 +7,7 @@
 
 import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
 import { SphereRenderer } from './SphereRenderer.js';
+import { StreamRenderer } from './StreamRenderer.js';
 import { CONFIG } from '../main.js';
 
 export class SceneManager {
@@ -21,6 +22,9 @@ export class SceneManager {
 
         // Sphere renderer
         this.sphereRenderer = new SphereRenderer(this.scene);
+
+        // Stream renderer for connections
+        this.streamRenderer = new StreamRenderer(this.scene);
 
         // Store sphere meshes for animation
         this.sphereMeshes = [];
@@ -171,6 +175,18 @@ export class SceneManager {
             // Subtle rotation (very slow)
             sphereGroup.rotation.z += deltaTime * 0.1;
         });
+
+        // Animate connection streams
+        this.streamRenderer.animate(deltaTime);
+    }
+
+    /**
+     * Update connection streams based on game state
+     * @param {GameState} gameState - Current game state
+     */
+    updateConnectionStreams(gameState) {
+        const activeConnections = gameState.getActiveConnections();
+        this.streamRenderer.updateStreams(activeConnections);
     }
 
     /**
