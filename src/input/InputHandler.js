@@ -213,9 +213,9 @@ export class InputHandler {
             console.log(`🔗 Connection created: ${sourceId} → ${targetId}`);
 
             // Phase 1.4 will add visual connection stream here
-            // For now, just log to console
 
-            // Keep source sphere selected (can switch targets)
+            // Deselect source sphere after connection (cleaner UX)
+            this.deselectSphere();
         }
     }
 
