@@ -25,8 +25,13 @@ export class InputHandler {
         this.raycaster = new THREE.Raycaster();
         this.pointer = new THREE.Vector2();
 
+        // Tooltip
+        this.tooltip = document.getElementById('sphere-tooltip');
+        this.hoveredSphereId = null;
+
         // Bind event handlers
         this.onPointerDown = this.onPointerDown.bind(this);
+        this.onPointerMove = this.onPointerMove.bind(this);
 
         // Setup event listeners
         this.setupEventListeners();
@@ -40,6 +45,7 @@ export class InputHandler {
     setupEventListeners() {
         // Mouse events
         this.canvas.addEventListener('mousedown', this.onPointerDown);
+        this.canvas.addEventListener('mousemove', this.onPointerMove);
 
         // Touch events
         this.canvas.addEventListener('touchstart', this.onPointerDown, { passive: false });
@@ -242,10 +248,86 @@ export class InputHandler {
     }
 
     /**
+     * Handle pointer move (for hover tooltip)
+     * @param {MouseEvent} event
+     */
+    onPointerMove(event) {
+        // Get pointer position
+        const rect = this.canvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+
+        this.pointer.x = (x / this.canvas.clientWidth) * 2 - 1;
+        this.pointer.y = -(y / this.canvas.clientHeight) * 2 + 1;
+
+        // Raycast to find hovered sphere
+        const hoveredSphereId = this.getSphereAtPointer();
+
+        if (hoveredSphereId) {
+            // Show tooltip for hovered sphere
+            this.hoveredSphereId = hoveredSphereId;
+            this.showTooltip(hoveredSphereId, event.clientX, event.clientY);
+        } else {
+            // Hide tooltip
+            this.hoveredSphereId = null;
+            this.hideTooltip();
+        }
+    }
+
+    /**
+     * Show tooltip for sphere
+     * @param {string} sphereId
+     * @param {number} x - Screen X position
+     * @param {number} y - Screen Y position
+     */
+    showTooltip(sphereId, x, y) {
+        const sphere = this.gameState.getSphere(sphereId);
+        if (!sphere) return;
+
+        // Update tooltip content
+        const tooltipId = this.tooltip.querySelector('.tooltip-id');
+        const tooltipOwner = this.tooltip.querySelector('.tooltip-owner');
+        const tooltipEnergy = this.tooltip.querySelector('.tooltip-energy');
+        const energyFill = this.tooltip.querySelector('.energy-fill');
+
+        tooltipId.textContent = sphere.id;
+
+        // Owner with color
+        const ownerColors = {
+            'player': '#FF6B35',
+            'enemy': '#00D9FF',
+            'neutral': '#808080'
+        };
+        tooltipOwner.innerHTML = `<span style="color: ${ownerColors[sphere.owner]}">● ${sphere.owner.toUpperCase()}</span>`;
+
+        // Energy
+        tooltipEnergy.textContent = `Energy: ${sphere.energy.toFixed(1)}%`;
+
+        // Energy bar color based on owner
+        energyFill.style.width = `${sphere.energy}%`;
+        energyFill.style.backgroundColor = ownerColors[sphere.owner];
+
+        // Position tooltip (offset from cursor)
+        this.tooltip.style.left = `${x + 15}px`;
+        this.tooltip.style.top = `${y + 15}px`;
+
+        // Show tooltip
+        this.tooltip.classList.add('visible');
+    }
+
+    /**
+     * Hide tooltip
+     */
+    hideTooltip() {
+        this.tooltip.classList.remove('visible');
+    }
+
+    /**
      * Cleanup event listeners
      */
     dispose() {
         this.canvas.removeEventListener('mousedown', this.onPointerDown);
+        this.canvas.removeEventListener('mousemove', this.onPointerMove);
         this.canvas.removeEventListener('touchstart', this.onPointerDown);
 
         console.log('🗑️  Input handler disposed');
