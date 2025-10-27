@@ -147,6 +147,19 @@ export class SceneManager {
     }
 
     /**
+     * Update all sphere colors (for theme switching)
+     */
+    updateAllSphereColors() {
+        this.sphereMeshes.forEach((sphereGroup, index) => {
+            // Center sphere = player, others = neutral
+            const color = index === 0 ? CONFIG.PLAYER_COLOR : CONFIG.NEUTRAL_COLOR;
+            this.sphereRenderer.updateSphereColor(sphereGroup, color, 1.0);
+        });
+
+        console.log('🎨 Updated all sphere colors');
+    }
+
+    /**
      * Render the scene
      */
     render() {

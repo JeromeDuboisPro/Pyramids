@@ -6,6 +6,7 @@
 
 import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
 import { SceneManager } from './rendering/SceneManager.js';
+import { ColorThemeManager } from './ui/ColorThemes.js';
 
 // Game configuration constants
 export const CONFIG = {
@@ -22,8 +23,8 @@ export const CONFIG = {
     GLOW_MULTIPLIER: 1.4,
 
     // Colors (Hex values)
-    PLAYER_COLOR: 0xFFFFFF,      // White
-    ENEMY_COLOR: 0x00D9FF,       // Cyan
+    PLAYER_COLOR: 0xFF6B35,      // Vibrant orange (warm)
+    ENEMY_COLOR: 0x00D9FF,       // Cyan (cool)
     NEUTRAL_COLOR: 0x808080,     // Grey
     BACKGROUND_COLOR: 0x000510,  // Deep space
 
@@ -63,6 +64,9 @@ class Game {
 
         // Initialize scene with test spheres
         this.sceneManager.createTestSpheres();
+
+        // Initialize color theme manager
+        this.colorThemeManager = new ColorThemeManager(this.sceneManager);
 
         // Hide loading screen
         this.loading.classList.add('hidden');

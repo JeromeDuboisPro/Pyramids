@@ -104,6 +104,151 @@
             background: rgba(0, 217, 255, 0.4);
             transform: scale(1.05);
         }
+
+        /* Settings Button */
+        #settings-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            background: rgba(0, 217, 255, 0.1);
+            border: 2px solid rgba(0, 217, 255, 0.3);
+            color: #00D9FF;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+            border-radius: 4px;
+            z-index: 100;
+        }
+
+        #settings-btn:hover {
+            background: rgba(0, 217, 255, 0.2);
+            border-color: #00D9FF;
+        }
+
+        /* Settings Panel */
+        #settings-panel {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 5, 16, 0.95);
+            border: 2px solid #00D9FF;
+            border-radius: 8px;
+            padding: 30px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            z-index: 1001;
+        }
+
+        #settings-panel.hidden {
+            display: none;
+        }
+
+        #settings-panel h2 {
+            color: #00D9FF;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        #settings-panel p {
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+
+        #close-settings {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 24px;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        #close-settings:hover {
+            color: #00D9FF;
+        }
+
+        #theme-options {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .theme-btn {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: rgba(0, 217, 255, 0.05);
+            border: 2px solid rgba(0, 217, 255, 0.2);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+        }
+
+        .theme-btn:hover {
+            background: rgba(0, 217, 255, 0.1);
+            border-color: rgba(0, 217, 255, 0.5);
+        }
+
+        .theme-btn.active {
+            background: rgba(0, 217, 255, 0.2);
+            border-color: #00D9FF;
+        }
+
+        .color-preview {
+            display: flex;
+            align-items: center;
+            margin-right: 15px;
+        }
+
+        .color-circle {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+        }
+
+        .theme-info {
+            flex: 1;
+        }
+
+        .theme-name {
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .theme-desc {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 13px;
+        }
+
+        /* Scrollbar styling */
+        #settings-panel::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #settings-panel::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        #settings-panel::-webkit-scrollbar-thumb {
+            background: rgba(0, 217, 255, 0.5);
+            border-radius: 4px;
+        }
+
+        #settings-panel::-webkit-scrollbar-thumb:hover {
+            background: #00D9FF;
+        }
     </style>
 </head>
 <body>
@@ -128,6 +273,17 @@
         <h1>VICTORY</h1>
         <p>All spheres captured!</p>
         <button id="restart-btn">Restart</button>
+    </div>
+
+    <!-- Settings Button -->
+    <button id="settings-btn">🎨 Themes</button>
+
+    <!-- Settings Panel (hidden by default) -->
+    <div id="settings-panel" class="hidden">
+        <button id="close-settings">×</button>
+        <h2>Color Themes</h2>
+        <p>Choose your battle colors! Changes apply instantly.</p>
+        <div id="theme-options"></div>
     </div>
 
     <!-- Three.js from CDN -->
