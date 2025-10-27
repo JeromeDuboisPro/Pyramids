@@ -167,22 +167,47 @@ export class SceneManager {
         const time = performance.now() * 0.001; // Convert to seconds
 
         this.sphereMeshes.forEach((sphereGroup, index) => {
-            // Subtle pulse effect on sphere itself
-            const sphereMesh = sphereGroup.children[0]; // First child is the sphere mesh
-            if (sphereMesh && sphereMesh.isMesh) {
-                const pulseSpeed = 1.0 + index * 0.1; // Slightly different speeds
-                const pulseAmount = 0.03; // 3% size variation (subtle)
-                const scale = 1.0 + Math.sin(time * pulseSpeed) * pulseAmount;
-                sphereMesh.scale.setScalar(scale);
-            }
+            let isOwnedSphere = false;
 
-            // Animate halo glow (breathing effect)
             sphereGroup.children.forEach(child => {
+                // Main sphere mesh - pulse emissive glow from dark to bright
+                if (child.isMesh && !child.userData.isOutline && !child.userData.isHalo) {
+                    // Check if this sphere has emissive (owned sphere)
+                    if (child.material.emissive && child.material.emissiveIntensity > 0) {
+                        isOwnedSphere = true;
+                        // Pulse emissive intensity from 0.2 (very dark) to 1.5 (bright)
+                        const pulseSpeed = 1.2 + index * 0.05;
+                        const minIntensity = 0.2;  // Very dark
+                        const maxIntensity = 1.8;  // Very bright
+                        const intensity = minIntensity + (maxIntensity - minIntensity) *
+                                        (0.5 + 0.5 * Math.sin(time * pulseSpeed));
+                        child.material.emissiveIntensity = intensity;
+                    }
+
+                    // Subtle size pulse
+                    if (isOwnedSphere) {
+                        const pulseSpeed = 1.0 + index * 0.1;
+                        const pulseAmount = 0.03;
+                        const scale = 1.0 + Math.sin(time * pulseSpeed) * pulseAmount;
+                        child.scale.setScalar(scale);
+                    }
+                }
+
+                // Animate halo glow (breathing effect)
                 if (child.userData.isHalo) {
-                    const pulseSpeed = 1.5;
+                    const pulseSpeed = 1.2 + index * 0.05;
                     const opacityBase = 0.3;
-                    const opacityVariation = 0.15;
+                    const opacityVariation = 0.2;
                     child.material.opacity = opacityBase + Math.sin(time * pulseSpeed) * opacityVariation;
+                }
+
+                // Pulse point light intensity
+                if (child.isLight) {
+                    const pulseSpeed = 1.2 + index * 0.05;
+                    const minIntensity = 0.8;
+                    const maxIntensity = 2.0;
+                    child.intensity = minIntensity + (maxIntensity - minIntensity) *
+                                    (0.5 + 0.5 * Math.sin(time * pulseSpeed));
                 }
             });
 
