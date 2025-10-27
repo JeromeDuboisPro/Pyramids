@@ -30,33 +30,29 @@ export class SphereRenderer {
 
         const radius = CONFIG.SPHERE_RADIUS;
 
-        // Create darker base color (30% brightness) and bright emissive for strong glow
-        const baseColor = new THREE.Color(color);
-        baseColor.multiplyScalar(0.3); // Much darker base
+        // Only non-neutral spheres should glow
+        const isNeutral = (color === CONFIG.NEUTRAL_COLOR);
 
-        // Translucent sphere with strong emissive glow
-        const sphereMaterial = new THREE.MeshPhysicalMaterial({
-            color: baseColor.getHex(),  // Dark base color
-            emissive: color,             // Bright emissive glow
-            emissiveIntensity: 2.0,      // Very strong glow (was 0.8)
+        const sphereMaterial = new THREE.MeshStandardMaterial({
+            color: color,
+            emissive: isNeutral ? 0x000000 : color,  // No emissive for neutral
+            emissiveIntensity: isNeutral ? 0 : 1.2,  // Only glow if not neutral
             transparent: true,
-            opacity: 0.9,                // Slightly more opaque
-            metalness: 0.0,              // No metallic reflection
-            roughness: 0.4,
-            transmission: 0.1,           // Less transparent to show glow better
-            thickness: 0.3,
-            clearcoat: 0.2,
-            clearcoatRoughness: 0.3
+            opacity: 0.85,
+            metalness: 0.1,
+            roughness: 0.3
         });
 
         const sphereGeometry = new THREE.SphereGeometry(radius, 64, 64); // High segments for smooth 3D
         const sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
         group.add(sphereMesh);
 
-        // Stronger point light for ambient glow
-        const pointLight = new THREE.PointLight(color, 1.5, 8); // Increased intensity and distance
-        pointLight.position.set(0, 0, 0);
-        group.add(pointLight);
+        // Only add point light for non-neutral spheres (glowing effect)
+        if (!isNeutral) {
+            const pointLight = new THREE.PointLight(color, 1.5, 8);
+            pointLight.position.set(0, 0, 0);
+            group.add(pointLight);
+        }
 
         // Add to scene
         this.scene.add(group);
@@ -71,20 +67,47 @@ export class SphereRenderer {
      * @param {number} intensity - Unused (kept for compatibility)
      */
     updateSphereColor(sphereGroup, newColor, intensity = 1.0) {
-        // Create darker base color for contrast
-        const baseColor = new THREE.Color(newColor);
-        baseColor.multiplyScalar(0.3); // Match the 30% darkness from createSphere
+        const isNeutral = (newColor === CONFIG.NEUTRAL_COLOR);
+        let hasLight = false;
 
         sphereGroup.children.forEach((child) => {
             if (child.isMesh && child.material) {
-                // Update sphere with dark base and bright emissive
-                child.material.color.setHex(baseColor.getHex());
-                child.material.emissive.setHex(newColor);
+                // Skip outline mesh (doesn't have emissive)
+                if (child.userData.isOutline) return;
+
+                // Update sphere color
+                child.material.color.setHex(newColor);
+
+                // Only set emissive for non-neutral spheres
+                if (child.material.emissive) {
+                    if (isNeutral) {
+                        child.material.emissive.setHex(0x000000); // No glow for neutral
+                        child.material.emissiveIntensity = 0;
+                    } else {
+                        child.material.emissive.setHex(newColor); // Glow for owned spheres
+                        child.material.emissiveIntensity = 1.2;
+                    }
+                }
             } else if (child.isLight) {
                 // Update point light color
                 child.color.setHex(newColor);
+                hasLight = true;
             }
         });
+
+        // Add or remove point light based on neutral state
+        if (!isNeutral && !hasLight) {
+            // Becoming non-neutral, add point light
+            const pointLight = new THREE.PointLight(newColor, 1.5, 8);
+            pointLight.position.set(0, 0, 0);
+            sphereGroup.add(pointLight);
+        } else if (isNeutral && hasLight) {
+            // Becoming neutral, remove point light
+            const lightToRemove = sphereGroup.children.find(child => child.isLight);
+            if (lightToRemove) {
+                sphereGroup.remove(lightToRemove);
+            }
+        }
     }
 
     /**
