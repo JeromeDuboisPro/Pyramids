@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Pyramids - A minimalist real-time strategy game with light-based mechanics">
+    <title>Pyramids</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #000510;
+            color: #ffffff;
+        }
+
+        #game-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            font-size: 24px;
+            color: #00D9FF;
+        }
+
+        #loading.hidden {
+            display: none;
+        }
+
+        .spinner {
+            border: 3px solid rgba(0, 217, 255, 0.3);
+            border-top: 3px solid #00D9FF;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            pointer-events: none;
+        }
+
+        #victory-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 5, 16, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        #victory-screen.hidden {
+            display: none;
+        }
+
+        #victory-screen h1 {
+            font-size: 48px;
+            color: #00D9FF;
+            margin-bottom: 20px;
+        }
+
+        #victory-screen button {
+            margin: 10px;
+            padding: 15px 30px;
+            font-size: 18px;
+            background: rgba(0, 217, 255, 0.2);
+            border: 2px solid #00D9FF;
+            color: #00D9FF;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        #victory-screen button:hover {
+            background: rgba(0, 217, 255, 0.4);
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading">
+        <div>PYRAMIDS</div>
+        <div class="spinner"></div>
+        <div>Loading...</div>
+    </div>
+
+    <!-- Game Canvas -->
+    <canvas id="game-canvas"></canvas>
+
+    <!-- HUD -->
+    <div id="hud">
+        <div id="sphere-count"></div>
+        <div id="selected-info"></div>
+    </div>
+
+    <!-- Victory Screen (hidden by default) -->
+    <div id="victory-screen" class="hidden">
+        <h1>VICTORY</h1>
+        <p>All spheres captured!</p>
+        <button id="restart-btn">Restart</button>
+    </div>
+
+    <!-- Three.js from CDN -->
+    <script async src="https://unpkg.com/three@0.160.0/build/three.module.js" type="module"></script>
+
+    <!-- Main game script -->
+    <script type="module" src="./src/main.js"></script>
+</body>
+</html>

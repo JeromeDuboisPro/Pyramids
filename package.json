@@ -1,0 +1,36 @@
+{
+  "name": "pyramids",
+  "version": "0.1.0",
+  "description": "A minimalist real-time strategy game with light-based energy transfer mechanics",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "serve": "python -m http.server 8000"
+  },
+  "keywords": [
+    "game",
+    "strategy",
+    "threejs",
+    "webgl",
+    "puzzle",
+    "minimalist"
+  ],
+  "author": "Jerome Dubois",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JeromeDuboisPro/Pyramids.git"
+  },
+  "bugs": {
+    "url": "https://github.com/JeromeDuboisPro/Pyramids/issues"
+  },
+  "homepage": "https://github.com/JeromeDuboisPro/Pyramids#readme",
+  "devDependencies": {
+    "vite": "^5.0.0"
+  },
+  "dependencies": {
+    "three": "^0.160.0"
+  }
+}
