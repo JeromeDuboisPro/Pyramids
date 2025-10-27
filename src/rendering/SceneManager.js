@@ -190,6 +190,23 @@ export class SceneManager {
     }
 
     /**
+     * Update sphere colors based on current energy levels (real-time)
+     * Shows smooth color transitions as energy changes
+     * @param {GameState} gameState - Current game state
+     */
+    updateSphereColors(gameState) {
+        gameState.getAllSpheres().forEach(sphere => {
+            if (sphere.mesh) {
+                // Get interpolated color based on current energy
+                const color = this.sphereRenderer.getColorFromEnergy(sphere.energy);
+
+                // Update sphere visual with smooth color transition
+                this.sphereRenderer.updateSphereColor(sphere.mesh, color, 1.0);
+            }
+        });
+    }
+
+    /**
      * Update all sphere colors (for theme switching)
      */
     updateAllSphereColors() {

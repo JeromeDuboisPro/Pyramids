@@ -204,8 +204,56 @@ export class GameState {
         this.gameTime += deltaTime;
         this.tick++;
 
-        // Phase 1.5 will add energy transfer updates here
-        // For now, just placeholder
+        // Process energy transfer for all active connections
+        this.processEnergyTransfer(deltaTime);
+    }
+
+    /**
+     * Process energy transfer for all active connections
+     * Applies attenuation formula and updates ownership
+     * @param {number} deltaTime - Time since last frame (seconds)
+     */
+    processEnergyTransfer(deltaTime) {
+        const connections = this.getActiveConnections();
+
+        connections.forEach(conn => {
+            const { source, target, distance } = conn;
+
+            // Calculate energy transfer rate using inverse square attenuation
+            // Formula: effectiveRate = BASE_ENERGY_RATE / (1 + distance² × ATTENUATION_FACTOR)
+            const effectiveRate = CONFIG.BASE_ENERGY_RATE /
+                (1 + distance * distance * CONFIG.ATTENUATION_FACTOR);
+
+            // Scale by deltaTime (convert from per-second to per-frame)
+            const energyAmount = effectiveRate * deltaTime;
+
+            // Transfer energy: source loses, target gains
+            const sourceChanged = source.transferEnergy(-energyAmount);
+            if (sourceChanged) {
+                target.transferEnergy(energyAmount);
+                this.stats.energyTransferred += energyAmount;
+            }
+
+            // Update ownership for both spheres if thresholds crossed
+            const sourceOwnershipChanged = source.updateOwnership();
+            const targetOwnershipChanged = target.updateOwnership();
+
+            // Mark spheres for visual update if ownership changed
+            if (sourceOwnershipChanged && source.mesh) {
+                source.mesh.userData.needsColorUpdate = true;
+                source.mesh.userData.targetColor = source.getColor();
+            }
+
+            if (targetOwnershipChanged && target.mesh) {
+                target.mesh.userData.needsColorUpdate = true;
+                target.mesh.userData.targetColor = target.getColor();
+
+                // Track sphere captures
+                if (target.owner === 'player') {
+                    this.stats.spheresCaptured++;
+                }
+            }
+        });
     }
 
     /**

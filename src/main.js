@@ -141,8 +141,11 @@ class Game {
      * @param {number} deltaTime - Time since last frame (seconds)
      */
     update(deltaTime) {
-        // Update game state logic
+        // Update game state logic (energy transfer)
         this.state.update(deltaTime);
+
+        // Update sphere colors based on current energy levels
+        this.sceneManager.updateSphereColors(this.state);
 
         // Update connection streams visualization
         this.sceneManager.updateConnectionStreams(this.state);
@@ -152,8 +155,6 @@ class Game {
 
         // Update HUD
         this.updateHUD();
-
-        // Phase 1.5+: Energy transfer logic and color changes
     }
 
     /**
