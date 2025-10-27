@@ -30,37 +30,37 @@ export class Sphere {
     }
 
     /**
-     * Get current color based on ownership and energy
+     * Get current color based on ownership
+     * Color represents owner, not energy level
+     * Energy level visible via tooltip
      * @returns {number} Hex color value
      */
     getColor() {
-        // Full ownership states
         if (this.owner === 'player') {
             return CONFIG.PLAYER_COLOR;
         }
         if (this.owner === 'enemy') {
             return CONFIG.ENEMY_COLOR;
         }
-
-        // Neutral - could be transitioning based on energy
-        // For now, just return neutral color (Phase 1.5 will add gradients)
         return CONFIG.NEUTRAL_COLOR;
     }
 
     /**
      * Update ownership based on energy level
-     * Uses threshold system: 0-33% enemy, 34-66% neutral, 67-100% player
+     * Ownership is persistent - only changes when fully captured
+     * 0% = enemy captures, 100% = player captures
+     * Energy represents the contest balance, not ownership
      */
     updateOwnership() {
         const prevOwner = this.owner;
 
-        if (this.energy <= CONFIG.ENEMY_THRESHOLD) {
+        // Only change ownership at extremes (fully captured)
+        if (this.energy <= 0) {
             this.owner = 'enemy';
-        } else if (this.energy >= CONFIG.NEUTRAL_THRESHOLD) {
+        } else if (this.energy >= 100) {
             this.owner = 'player';
-        } else {
-            this.owner = 'neutral';
         }
+        // Otherwise keep existing owner (persistent ownership)
 
         // Return true if ownership changed
         return prevOwner !== this.owner;

@@ -210,7 +210,8 @@ export class GameState {
 
     /**
      * Process energy transfer for all active connections
-     * Applies attenuation formula and updates ownership
+     * Each sphere produces energy based on its owner and transfers to target
+     * Source maintains its energy - does NOT lose energy when transferring
      * @param {number} deltaTime - Time since last frame (seconds)
      */
     processEnergyTransfer(deltaTime) {
@@ -227,22 +228,26 @@ export class GameState {
             // Scale by deltaTime (convert from per-second to per-frame)
             const energyAmount = effectiveRate * deltaTime;
 
-            // Transfer energy: source loses, target gains
-            const sourceChanged = source.transferEnergy(-energyAmount);
-            if (sourceChanged) {
-                target.transferEnergy(energyAmount);
-                this.stats.energyTransferred += energyAmount;
+            // Determine energy direction based on source owner
+            // Player-owned: adds player energy (+)
+            // Enemy-owned: adds enemy energy (-)
+            // Neutral: no energy production
+            let transferAmount = 0;
+            if (source.owner === 'player') {
+                transferAmount = energyAmount;  // Positive = player energy
+            } else if (source.owner === 'enemy') {
+                transferAmount = -energyAmount; // Negative = enemy energy
+            }
+            // Neutral spheres produce no energy
+
+            // Transfer energy to target (source keeps its own energy)
+            if (transferAmount !== 0) {
+                target.transferEnergy(transferAmount);
+                this.stats.energyTransferred += Math.abs(transferAmount);
             }
 
-            // Update ownership for both spheres if thresholds crossed
-            const sourceOwnershipChanged = source.updateOwnership();
+            // Update ownership only for target (based on energy thresholds)
             const targetOwnershipChanged = target.updateOwnership();
-
-            // Mark spheres for visual update if ownership changed
-            if (sourceOwnershipChanged && source.mesh) {
-                source.mesh.userData.needsColorUpdate = true;
-                source.mesh.userData.targetColor = source.getColor();
-            }
 
             if (targetOwnershipChanged && target.mesh) {
                 target.mesh.userData.needsColorUpdate = true;

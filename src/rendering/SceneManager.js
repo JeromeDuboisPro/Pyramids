@@ -190,17 +190,18 @@ export class SceneManager {
     }
 
     /**
-     * Update sphere colors based on current energy levels (real-time)
-     * Shows smooth color transitions as energy changes
+     * Update sphere colors based on ownership
+     * Color represents owner (player/enemy/neutral)
+     * Energy level shown via tooltip, not color
      * @param {GameState} gameState - Current game state
      */
     updateSphereColors(gameState) {
         gameState.getAllSpheres().forEach(sphere => {
             if (sphere.mesh) {
-                // Get interpolated color based on current energy
-                const color = this.sphereRenderer.getColorFromEnergy(sphere.energy);
+                // Get color based on owner
+                const color = sphere.getColor();
 
-                // Update sphere visual with smooth color transition
+                // Update sphere visual
                 this.sphereRenderer.updateSphereColor(sphere.mesh, color, 1.0);
             }
         });

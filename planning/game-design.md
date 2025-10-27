@@ -75,36 +75,51 @@
 
 ### Energy System
 
+**Core Rules**:
+1. Each sphere PRODUCES energy based on its owner
+2. When connected, sphere transfers production to target WITHOUT losing own energy
+3. Ownership is PERSISTENT until fully captured (0% or 100%)
+4. Energy % represents the player/enemy contest balance, not sphere health
+
 **Energy Range**: 0% - 100% per sphere
 
-**Ownership Calculation**:
+**Ownership Rules**:
 ```
-  0-33%  → Enemy owned (enemy color)
- 34-66%  → Neutral (grey)
- 67-100% → Player owned (player color)
+Owner field only changes at extremes:
+  0%   → Captured by enemy
+  100% → Captured by player
+
+Owner persists otherwise:
+  10% player-owned sphere = still player-owned (being attacked, not captured)
+  90% enemy-owned sphere  = still enemy-owned (dominating, not lost)
 ```
 
-**Transfer Rate** (per second):
+**Energy Production**:
 ```javascript
-baseRate = 15% per second
-effectiveRate = baseRate / (1 + distance² × 0.01)
-
-// Example:
-Distance 1.0 → 14.85% per second (capture in ~7 seconds)
-Distance 3.0 → 13.64% per second (capture in ~8 seconds)
-Distance 5.0 → 11.54% per second (capture in ~9 seconds)
+Player-owned sphere: produces +15% per second (player energy)
+Enemy-owned sphere:  produces -15% per second (enemy energy)
+Neutral sphere:      produces 0% (no energy generation)
 ```
 
-**Color Interpolation**:
+**Transfer Rate** (with distance attenuation):
 ```javascript
-// Smooth RGB lerp based on energy percentage
-if (energy < 33) {
-  color = lerp(ENEMY_COLOR, NEUTRAL_COLOR, energy / 33)
-} else if (energy < 67) {
-  color = lerp(NEUTRAL_COLOR, PLAYER_COLOR, (energy - 33) / 34)
-} else {
-  color = PLAYER_COLOR
-}
+effectiveRate = 15% / (1 + distance² × 0.01)
+
+// Examples:
+Distance 1.0 → 14.85% per second
+Distance 3.0 → 13.64% per second
+Distance 5.0 → 11.54% per second
+```
+
+**Visual Representation**:
+```javascript
+// Color based on owner (persistent)
+color = owner === 'player' ? PLAYER_COLOR :
+        owner === 'enemy'  ? ENEMY_COLOR  :
+                            NEUTRAL_COLOR
+
+// Energy level shown via hover tooltip
+// (e.g., "Energy: 45.2%" on mouseover)
 ```
 
 ### Connection Rules
