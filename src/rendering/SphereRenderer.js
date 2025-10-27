@@ -33,19 +33,40 @@ export class SphereRenderer {
         // Only non-neutral spheres should glow
         const isNeutral = (color === CONFIG.NEUTRAL_COLOR);
 
-        const sphereMaterial = new THREE.MeshStandardMaterial({
+        // Outer glass shell - transparent
+        const glassShellMaterial = new THREE.MeshPhysicalMaterial({
             color: color,
-            emissive: isNeutral ? 0x000000 : color,  // No emissive for neutral
-            emissiveIntensity: isNeutral ? 0 : 1.2,  // Only glow if not neutral
             transparent: true,
-            opacity: 0.85,
-            metalness: 0.1,
-            roughness: 0.3
+            opacity: 0.3,                // Very transparent
+            metalness: 0.0,
+            roughness: 0.1,              // Very smooth/glossy
+            transmission: 0.9,           // High transmission = glass-like
+            thickness: 0.5,
+            clearcoat: 1.0,              // Maximum glossy coating
+            clearcoatRoughness: 0.1
         });
 
-        const sphereGeometry = new THREE.SphereGeometry(radius, 64, 64); // High segments for smooth 3D
-        const sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
-        group.add(sphereMesh);
+        const shellGeometry = new THREE.SphereGeometry(radius, 64, 64);
+        const shellMesh = new THREE.Mesh(shellGeometry, glassShellMaterial);
+        shellMesh.userData.isShell = true;
+        group.add(shellMesh);
+
+        // Inner glowing core - only for owned spheres
+        if (!isNeutral) {
+            const coreRadius = radius * 0.5; // Half size of outer shell
+            const coreMaterial = new THREE.MeshStandardMaterial({
+                color: color,
+                emissive: color,
+                emissiveIntensity: 1.5,  // Strong initial glow
+                transparent: true,
+                opacity: 0.9
+            });
+
+            const coreGeometry = new THREE.SphereGeometry(coreRadius, 32, 32);
+            const coreMesh = new THREE.Mesh(coreGeometry, coreMaterial);
+            coreMesh.userData.isCore = true;
+            group.add(coreMesh);
+        }
 
         // Only add point light and glow halo for non-neutral spheres
         if (!isNeutral) {
@@ -88,6 +109,7 @@ export class SphereRenderer {
 
         let hasLight = false;
         let hasHalo = false;
+        let hasCore = false;
 
         sphereGroup.children.forEach((child) => {
             if (child.isMesh && child.material) {
@@ -101,18 +123,18 @@ export class SphereRenderer {
                     return;
                 }
 
-                // Update sphere color
-                child.material.color.setHex(newColor);
+                // Update inner glowing core
+                if (child.userData.isCore) {
+                    child.material.color.setHex(newColor);
+                    child.material.emissive.setHex(newColor);
+                    child.material.emissiveIntensity = 1.5; // Will be pulsed by animation
+                    hasCore = true;
+                    return;
+                }
 
-                // Only set emissive for fully owned spheres
-                if (child.material.emissive) {
-                    if (isFullyOwned) {
-                        child.material.emissive.setHex(newColor); // Glow for fully owned spheres
-                        child.material.emissiveIntensity = 1.2;
-                    } else {
-                        child.material.emissive.setHex(0x000000); // No glow during capture
-                        child.material.emissiveIntensity = 0;
-                    }
+                // Update glass shell color
+                if (child.userData.isShell) {
+                    child.material.color.setHex(newColor);
                 }
             } else if (child.isLight) {
                 // Update point light color
@@ -121,7 +143,32 @@ export class SphereRenderer {
             }
         });
 
-        // Add or remove point light and halo based on fully owned state
+        // Add or remove components based on fully owned state
+        if (isFullyOwned && !hasCore) {
+            // Becoming fully owned, add inner glowing core
+            const radius = CONFIG.SPHERE_RADIUS;
+            const coreRadius = radius * 0.5;
+            const coreMaterial = new THREE.MeshStandardMaterial({
+                color: newColor,
+                emissive: newColor,
+                emissiveIntensity: 1.5,
+                transparent: true,
+                opacity: 0.9
+            });
+            const coreGeometry = new THREE.SphereGeometry(coreRadius, 32, 32);
+            const coreMesh = new THREE.Mesh(coreGeometry, coreMaterial);
+            coreMesh.userData.isCore = true;
+            sphereGroup.add(coreMesh);
+        } else if (!isFullyOwned && hasCore) {
+            // No longer fully owned, remove glowing core
+            const coreToRemove = sphereGroup.children.find(child => child.userData.isCore);
+            if (coreToRemove) {
+                coreToRemove.geometry.dispose();
+                coreToRemove.material.dispose();
+                sphereGroup.remove(coreToRemove);
+            }
+        }
+
         if (isFullyOwned && !hasLight) {
             // Becoming fully owned, add point light and halo
             const pointLight = new THREE.PointLight(newColor, 1.5, 8);
@@ -142,7 +189,7 @@ export class SphereRenderer {
             haloMesh.userData.isHalo = true;
             sphereGroup.add(haloMesh);
         } else if (!isFullyOwned && (hasLight || hasHalo)) {
-            // No longer fully owned (neutral or being captured), remove point light and halo
+            // No longer fully owned, remove point light and halo
             const lightToRemove = sphereGroup.children.find(child => child.isLight);
             if (lightToRemove) {
                 sphereGroup.remove(lightToRemove);

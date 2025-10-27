@@ -170,27 +170,22 @@ export class SceneManager {
             let isOwnedSphere = false;
 
             sphereGroup.children.forEach(child => {
-                // Main sphere mesh - pulse emissive glow from dark to bright
-                if (child.isMesh && !child.userData.isOutline && !child.userData.isHalo) {
-                    // Check if this sphere has emissive (owned sphere)
-                    if (child.material.emissive && child.material.emissiveIntensity > 0) {
-                        isOwnedSphere = true;
-                        // Pulse emissive intensity from 0.2 (very dark) to 1.5 (bright)
-                        const pulseSpeed = 1.2 + index * 0.05;
-                        const minIntensity = 0.2;  // Very dark
-                        const maxIntensity = 1.8;  // Very bright
-                        const intensity = minIntensity + (maxIntensity - minIntensity) *
-                                        (0.5 + 0.5 * Math.sin(time * pulseSpeed));
-                        child.material.emissiveIntensity = intensity;
-                    }
+                // Inner glowing core - dramatic pulse
+                if (child.userData.isCore && child.material.emissive) {
+                    isOwnedSphere = true;
+                    const pulseSpeed = 1.2 + index * 0.05;
 
-                    // Subtle size pulse
-                    if (isOwnedSphere) {
-                        const pulseSpeed = 1.0 + index * 0.1;
-                        const pulseAmount = 0.03;
-                        const scale = 1.0 + Math.sin(time * pulseSpeed) * pulseAmount;
-                        child.scale.setScalar(scale);
-                    }
+                    // Pulse emissive intensity from very dark to very bright
+                    const minIntensity = 0.3;
+                    const maxIntensity = 2.5;
+                    const intensity = minIntensity + (maxIntensity - minIntensity) *
+                                    (0.5 + 0.5 * Math.sin(time * pulseSpeed));
+                    child.material.emissiveIntensity = intensity;
+
+                    // Subtle size pulse for breathing effect
+                    const pulseAmount = 0.05; // 5% variation
+                    const scale = 1.0 + Math.sin(time * pulseSpeed) * pulseAmount;
+                    child.scale.setScalar(scale);
                 }
 
                 // Animate halo glow (breathing effect)
