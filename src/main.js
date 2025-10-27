@@ -8,6 +8,7 @@ import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
 import { SceneManager } from './rendering/SceneManager.js';
 import { ColorThemeManager } from './ui/ColorThemes.js';
 import { GameState } from './core/GameState.js';
+import { InputHandler } from './input/InputHandler.js';
 
 // Game configuration constants
 export const CONFIG = {
@@ -71,6 +72,14 @@ class Game {
 
         // Create visual spheres from game state
         this.sceneManager.createSpheresFromGameState(this.state);
+
+        // Initialize input handler (mouse + touch)
+        this.inputHandler = new InputHandler(
+            this.canvas,
+            this.sceneManager.camera,
+            this.state,
+            this.sceneManager
+        );
 
         // Initialize color theme manager
         this.colorThemeManager = new ColorThemeManager(this.sceneManager);
@@ -138,8 +147,50 @@ class Game {
         // Update visual animations
         this.sceneManager.updateSphereAnimations(deltaTime);
 
+        // Update HUD
+        this.updateHUD();
+
         // Phase 1.5+: Energy transfer visualization
         // Phase 1.4+: Connection pulse rendering
+    }
+
+    /**
+     * Update HUD information
+     */
+    updateHUD() {
+        const stats = this.state.getStats();
+        const selected = this.state.getSelectedSphere();
+
+        // Update sphere count
+        const sphereCountEl = document.getElementById('sphere-count');
+        if (sphereCountEl) {
+            sphereCountEl.innerHTML = `
+                <div>Player: ${stats.playerSpheres}/${stats.totalSpheres} spheres</div>
+                <div>Connections: ${stats.activeConnections}</div>
+            `;
+        }
+
+        // Update selected sphere info
+        const selectedInfoEl = document.getElementById('selected-info');
+        if (selectedInfoEl) {
+            if (selected) {
+                selectedInfoEl.innerHTML = `
+                    <div style="color: #FF6B35; font-weight: bold;">
+                        Selected: ${selected.id}
+                    </div>
+                    <div style="font-size: 12px;">
+                        Energy: ${selected.energy.toFixed(0)}%
+                        ${selected.isConnected() ? ` → ${selected.connectedTo}` : ''}
+                    </div>
+                `;
+            } else {
+                selectedInfoEl.innerHTML = `
+                    <div style="color: rgba(255,255,255,0.5); font-size: 12px;">
+                        Click a sphere to select
+                    </div>
+                `;
+            }
+        }
     }
 
     /**
