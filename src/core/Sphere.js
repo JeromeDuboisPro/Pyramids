@@ -51,7 +51,7 @@ export class Sphere {
 
     /**
      * Get interpolated color showing capture progress
-     * During capture: interpolates from neutral to attacker's color
+     * Uses discrete color steps instead of smooth interpolation to reduce texture regeneration
      * @returns {number} Hex color value
      */
     getInterpolatedColor() {
@@ -60,17 +60,28 @@ export class Sphere {
             return this.getColor();
         }
 
-        // If neutral and being attacked, interpolate based on energy
+        // If neutral and being attacked, use discrete color steps
         if (this.attackingOwner && this.energy > 0) {
-            const neutralColor = new THREE.Color(CONFIG.NEUTRAL_COLOR);
-            const attackerColor = new THREE.Color(
-                this.attackingOwner === 'player' ? CONFIG.PLAYER_COLOR : CONFIG.ENEMY_COLOR
-            );
+            const attackerColor = this.attackingOwner === 'player' ? CONFIG.PLAYER_COLOR : CONFIG.ENEMY_COLOR;
 
-            // Interpolate from neutral (0%) to attacker color (100%)
-            const t = this.energy / 100; // 0 to 1
-            const resultColor = new THREE.Color().lerpColors(neutralColor, attackerColor, t);
-            return resultColor.getHex();
+            // Discrete color steps to reduce texture regeneration:
+            // 0-25%: neutral
+            // 25-50%: 33% attacker color
+            // 50-75%: 66% attacker color
+            // 75-100%: full attacker color
+            if (this.energy >= 75) {
+                return attackerColor;
+            } else if (this.energy >= 50) {
+                const neutralColor = new THREE.Color(CONFIG.NEUTRAL_COLOR);
+                const attacker = new THREE.Color(attackerColor);
+                return new THREE.Color().lerpColors(neutralColor, attacker, 0.66).getHex();
+            } else if (this.energy >= 25) {
+                const neutralColor = new THREE.Color(CONFIG.NEUTRAL_COLOR);
+                const attacker = new THREE.Color(attackerColor);
+                return new THREE.Color().lerpColors(neutralColor, attacker, 0.33).getHex();
+            } else {
+                return CONFIG.NEUTRAL_COLOR;
+            }
         }
 
         // Default: neutral color

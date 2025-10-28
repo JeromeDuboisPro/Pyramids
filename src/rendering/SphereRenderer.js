@@ -161,7 +161,12 @@ export class SphereRenderer {
     updateSphereColor(sphereGroup, newColor, intensity = 1.0) {
         // Skip update if color hasn't actually changed (performance optimization)
         const currentColor = sphereGroup.userData.currentColor;
-        const colorChanged = currentColor !== newColor;
+
+        // Throttle color updates: only update if color difference is significant (> 5%)
+        // This prevents rapid texture regeneration during gradual color transitions
+        const colorDiff = Math.abs(newColor - currentColor);
+        const colorThreshold = 0x0A0A0A; // ~4% color change threshold
+        const colorChanged = !currentColor || colorDiff > colorThreshold;
 
         // Check if this is a fully owned sphere (not neutral, not interpolated capture color)
         const isPlayerOwned = (newColor === CONFIG.PLAYER_COLOR);
