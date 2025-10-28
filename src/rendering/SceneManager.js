@@ -280,7 +280,17 @@ export class SceneManager {
         const energyPercent = Math.max(0, Math.min(100, energy)) / 100;
 
         // Rotation speed scales with energy
-        coreMesh.userData.currentRotationSpeed = baseRotSpeed * energyPercent;
+        const newRotSpeed = baseRotSpeed * energyPercent;
+
+        // DEBUG: Log when rotation speed changes significantly
+        const oldSpeed = coreMesh.userData.currentRotationSpeed || 0;
+        if (Math.abs(newRotSpeed - oldSpeed) > 0.1) {
+            const sphereId = sphereGroup.userData.sphereId;
+            const multiplier = coreMesh.userData.rotationSpeedMultiplier || 1.0;
+            console.log(`🔄 ${sphereId}: energy=${energy.toFixed(1)}% → rotSpeed=${newRotSpeed.toFixed(3)} (mult=${multiplier})`);
+        }
+
+        coreMesh.userData.currentRotationSpeed = newRotSpeed;
     }
 
     /**

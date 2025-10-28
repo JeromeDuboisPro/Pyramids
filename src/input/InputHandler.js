@@ -37,7 +37,10 @@ export class InputHandler {
         this.zoomLevel = 1.0;  // 1.0 = default view
         this.minZoom = 0.5;    // Can zoom out to 2x area
         this.maxZoom = 3.0;    // Can zoom in to 3x magnification
-        this.cameraAngle = 0;  // Rotation angle in radians
+
+        // 3D rotation state
+        this.rotationPivot = new THREE.Vector3(0, 0, 0); // Pivot point for rotation
+        this.cameraDistance = 20; // Distance from pivot
 
         // Bind event handlers
         this.onPointerDown = this.onPointerDown.bind(this);
@@ -316,36 +319,51 @@ export class InputHandler {
             return; // Skip tooltip while panning
         }
 
-        // Handle rotation if right button is held
+        // Handle 3D rotation around pivot point
         if (this.isRotating) {
             const deltaX = event.clientX - this.previousRotatePosition.x;
+            const deltaY = event.clientY - this.previousRotatePosition.y;
 
             this.previousRotatePosition = {
                 x: event.clientX,
                 y: event.clientY
             };
 
-            // Rotate camera around Z axis (horizontal mouse movement = rotation)
-            const rotateSpeed = 0.005;
-            this.cameraAngle += deltaX * rotateSpeed;
-
-            // Apply rotation: rotate entire scene view around center
-            // For orthographic top-down, we rotate the camera's position around origin
-            // while keeping it looking at origin
-            const distance = 20; // Camera distance from origin (z-axis)
-            this.camera.position.set(
-                0,
-                0,
-                distance
-            );
-            this.camera.lookAt(0, 0, 0);
-
-            // Rotate camera's up vector to rotate the view
-            this.camera.up.set(
-                Math.sin(this.cameraAngle),
-                Math.cos(this.cameraAngle),
+            // Calculate rotation pivot (intersection of screen center with z=0 plane)
+            // Use current camera position's XY as pivot (where camera is looking)
+            const currentLookAt = new THREE.Vector3(
+                this.camera.position.x,
+                this.camera.position.y,
                 0
             );
+            this.rotationPivot.copy(currentLookAt);
+
+            // Rotate camera around pivot point
+            const rotateSpeed = 0.005;
+
+            // Get vector from pivot to camera
+            const toPivotVector = new THREE.Vector3()
+                .subVectors(this.camera.position, this.rotationPivot);
+
+            // Horizontal rotation (around Z axis through pivot)
+            const angleH = deltaX * rotateSpeed;
+            const quaternionH = new THREE.Quaternion()
+                .setFromAxisAngle(new THREE.Vector3(0, 0, 1), -angleH);
+            toPivotVector.applyQuaternion(quaternionH);
+
+            // Vertical rotation (around right vector)
+            const angleV = deltaY * rotateSpeed;
+            const right = new THREE.Vector3(1, 0, 0)
+                .applyQuaternion(quaternionH);
+            const quaternionV = new THREE.Quaternion()
+                .setFromAxisAngle(right, -angleV);
+            toPivotVector.applyQuaternion(quaternionV);
+
+            // Update camera position relative to pivot
+            this.camera.position.copy(this.rotationPivot).add(toPivotVector);
+
+            // Keep camera looking at pivot
+            this.camera.lookAt(this.rotationPivot);
             this.camera.updateProjectionMatrix();
 
             return; // Skip tooltip while rotating
