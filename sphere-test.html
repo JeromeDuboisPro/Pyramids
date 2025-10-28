@@ -266,6 +266,28 @@
                     { id: 'C3-5', name: 'Spring Elastic', tech: 'C4-3 + spring physics', create: createSpringElastic },
                     { id: 'X1', name: 'Hybrid Masterpiece', tech: 'Halo + Particle Shell + Elastic', create: createHybridMasterpiece }
                 ]
+            },
+            // SET 4: Final polish (A3-3, A3-5, B3-5, X1 perfection)
+            {
+                name: "The Final Four (Master designs)",
+                designs: [
+                    { id: 'A4-1', name: 'Fast Pulse Halo', tech: 'A3-3 + faster pulse speed', create: createFastPulseHalo },
+                    { id: 'A4-2', name: 'Slow Breath Halo', tech: 'A3-3 + slow breathing pulse', create: createSlowBreathHalo },
+                    { id: 'A4-3', name: 'Double Pulse Halo', tech: 'A3-3 + core + halo pulse together', create: createDoublePulseHalo },
+                    { id: 'A5-1', name: 'Warm Gradient', tech: 'A3-5 + orange→red→pink gradient', create: createWarmGradient },
+                    { id: 'A5-2', name: 'Cool Gradient', tech: 'A3-5 + orange→blue→cyan gradient', create: createCoolGradient },
+                    { id: 'A5-3', name: 'Rainbow Halo', tech: 'A3-5 + multi-color gradient', create: createRainbowHalo },
+                    { id: 'A5-4', name: 'Animated Gradient', tech: 'A3-5 + rotating color shift', create: createAnimatedGradient },
+                    { id: 'A5-5', name: 'Plasma Halo', tech: 'A3-5 + plasma-like color effect', create: createPlasmaHalo },
+                    { id: 'B5-1', name: '4-Layer Shell', tech: 'B3-5 + one more particle layer', create: create4LayerShell },
+                    { id: 'B5-2', name: 'Reverse Layers', tech: 'B3-5 + layers rotate opposite', create: createReverseLayers },
+                    { id: 'B5-3', name: 'Pulsing Layers', tech: 'B3-5 + layers pulse radially', create: createPulsingLayers },
+                    { id: 'X2', name: 'Hybrid v2', tech: 'X1 + gradient halo', create: createHybridV2 },
+                    { id: 'X3', name: 'Hybrid v3', tech: 'X1 + 4 particle layers', create: createHybridV3 },
+                    { id: 'X4', name: 'Hybrid Elite', tech: 'X1 + gradient + 4 layers + spring', create: createHybridElite },
+                    { id: 'X5', name: 'Hybrid Ultimate', tech: 'All techniques combined, polished', create: createHybridUltimate },
+                    { id: 'FINAL', name: 'The One', tech: 'Perfect synthesis of all learnings', create: createTheOne }
+                ]
             }
         ];
 
@@ -1551,6 +1573,812 @@
             group.add(core);
             group.add(elasticShell);
             group.add(particles);
+            group.add(halo);
+            scene.add(group);
+            return group;
+        }
+
+        // SET 4: Final polish variations
+        function createFastPulseHalo(scene) {
+            const group = new THREE.Group();
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.4, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF6B35,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 3.0
+                })
+            );
+            const halo = new THREE.Mesh(
+                new THREE.SphereGeometry(0.6, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    color: 0xFF6B35,
+                    transparent: true,
+                    opacity: 0.2,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            core.userData.isCore = true;
+            halo.userData.isPulsing = true;
+            halo.userData.largeScale = true;
+            halo.userData.fastPulse = true;
+            group.add(core);
+            group.add(halo);
+            scene.add(group);
+            return group;
+        }
+
+        function createSlowBreathHalo(scene) {
+            const group = new THREE.Group();
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.4, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF6B35,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 3.0
+                })
+            );
+            const halo = new THREE.Mesh(
+                new THREE.SphereGeometry(0.6, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    color: 0xFF6B35,
+                    transparent: true,
+                    opacity: 0.2,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            core.userData.isCore = true;
+            halo.userData.isPulsing = true;
+            halo.userData.breath = true;
+            group.add(core);
+            group.add(halo);
+            scene.add(group);
+            return group;
+        }
+
+        function createDoublePulseHalo(scene) {
+            const group = new THREE.Group();
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.4, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF6B35,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 3.0
+                })
+            );
+            core.userData.isCore = true;
+            core.userData.pulseDramatic = true;
+            const halo = new THREE.Mesh(
+                new THREE.SphereGeometry(0.6, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    color: 0xFF6B35,
+                    transparent: true,
+                    opacity: 0.2,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            halo.userData.isPulsing = true;
+            halo.userData.largeScale = true;
+            group.add(core);
+            group.add(halo);
+            scene.add(group);
+            return group;
+        }
+
+        function createWarmGradient(scene) {
+            const group = new THREE.Group();
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.4, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF6B35,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 3.0
+                })
+            );
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            const gradient = ctx.createRadialGradient(128, 128, 40, 128, 128, 128);
+            gradient.addColorStop(0, 'rgba(255, 107, 53, 0.7)');
+            gradient.addColorStop(0.4, 'rgba(255, 80, 80, 0.5)');
+            gradient.addColorStop(0.7, 'rgba(255, 150, 180, 0.3)');
+            gradient.addColorStop(1, 'rgba(255, 107, 53, 0)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 256, 256);
+            const texture = new THREE.CanvasTexture(canvas);
+            const halo = new THREE.Mesh(
+                new THREE.SphereGeometry(0.65, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    map: texture,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            core.userData.isCore = true;
+            group.add(core);
+            group.add(halo);
+            scene.add(group);
+            return group;
+        }
+
+        function createCoolGradient(scene) {
+            const group = new THREE.Group();
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.4, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF6B35,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 3.0
+                })
+            );
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            const gradient = ctx.createRadialGradient(128, 128, 40, 128, 128, 128);
+            gradient.addColorStop(0, 'rgba(255, 107, 53, 0.7)');
+            gradient.addColorStop(0.4, 'rgba(100, 180, 255, 0.5)');
+            gradient.addColorStop(0.7, 'rgba(0, 255, 255, 0.3)');
+            gradient.addColorStop(1, 'rgba(255, 107, 53, 0)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 256, 256);
+            const texture = new THREE.CanvasTexture(canvas);
+            const halo = new THREE.Mesh(
+                new THREE.SphereGeometry(0.65, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    map: texture,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            core.userData.isCore = true;
+            group.add(core);
+            group.add(halo);
+            scene.add(group);
+            return group;
+        }
+
+        function createRainbowHalo(scene) {
+            const group = new THREE.Group();
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.4, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF6B35,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 3.0
+                })
+            );
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            const gradient = ctx.createRadialGradient(128, 128, 40, 128, 128, 128);
+            gradient.addColorStop(0, 'rgba(255, 107, 53, 0.7)');
+            gradient.addColorStop(0.2, 'rgba(255, 200, 100, 0.6)');
+            gradient.addColorStop(0.4, 'rgba(100, 255, 100, 0.5)');
+            gradient.addColorStop(0.6, 'rgba(100, 200, 255, 0.4)');
+            gradient.addColorStop(0.8, 'rgba(200, 100, 255, 0.3)');
+            gradient.addColorStop(1, 'rgba(255, 107, 53, 0)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 256, 256);
+            const texture = new THREE.CanvasTexture(canvas);
+            const halo = new THREE.Mesh(
+                new THREE.SphereGeometry(0.65, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    map: texture,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            core.userData.isCore = true;
+            group.add(core);
+            group.add(halo);
+            scene.add(group);
+            return group;
+        }
+
+        function createAnimatedGradient(scene) {
+            const group = new THREE.Group();
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.4, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF6B35,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 3.0
+                })
+            );
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            const gradient = ctx.createRadialGradient(128, 128, 50, 128, 128, 128);
+            gradient.addColorStop(0, 'rgba(255, 107, 53, 0.6)');
+            gradient.addColorStop(0.5, 'rgba(255, 200, 100, 0.3)');
+            gradient.addColorStop(1, 'rgba(255, 107, 53, 0)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 256, 256);
+            const texture = new THREE.CanvasTexture(canvas);
+            const halo = new THREE.Mesh(
+                new THREE.SphereGeometry(0.65, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    map: texture,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            halo.userData.rotatingHalo = true;
+            core.userData.isCore = true;
+            group.add(core);
+            group.add(halo);
+            scene.add(group);
+            return group;
+        }
+
+        function createPlasmaHalo(scene) {
+            const group = new THREE.Group();
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.4, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF6B35,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 3.0
+                })
+            );
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            // Create plasma-like pattern
+            for (let x = 0; x < 256; x++) {
+                for (let y = 0; y < 256; y++) {
+                    const dx = x - 128;
+                    const dy = y - 128;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const angle = Math.atan2(dy, dx);
+                    const value = Math.sin(dist * 0.05 + angle * 3);
+                    const alpha = Math.max(0, (1 - dist / 128) * 0.6);
+                    const r = 255;
+                    const g = Math.floor(107 + value * 100);
+                    const b = Math.floor(53 + value * 50);
+                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                    ctx.fillRect(x, y, 1, 1);
+                }
+            }
+            const texture = new THREE.CanvasTexture(canvas);
+            const halo = new THREE.Mesh(
+                new THREE.SphereGeometry(0.65, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    map: texture,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            halo.userData.rotatingHalo = true;
+            core.userData.isCore = true;
+            group.add(core);
+            group.add(halo);
+            scene.add(group);
+            return group;
+        }
+
+        function create4LayerShell(scene) {
+            const group = new THREE.Group();
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.3, 32, 32),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF6B35,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 2.0
+                })
+            );
+            group.add(core);
+
+            // Four particle layers
+            [0.38, 0.46, 0.54, 0.62].forEach((radius, layerIndex) => {
+                const particleCount = 90 - layerIndex * 15;
+                const geometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(particleCount * 3);
+                for (let i = 0; i < particleCount; i++) {
+                    const phi = Math.acos(2 * Math.random() - 1);
+                    const theta = Math.random() * Math.PI * 2;
+                    positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+                    positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+                    positions[i * 3 + 2] = radius * Math.cos(phi);
+                }
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                const material = new THREE.PointsMaterial({
+                    color: 0xFF6B35,
+                    size: 0.04 + layerIndex * 0.01,
+                    transparent: true,
+                    opacity: 0.9 - layerIndex * 0.15,
+                    blending: THREE.AdditiveBlending
+                });
+                const particles = new THREE.Points(geometry, material);
+                particles.userData.isParticles = true;
+                particles.userData.layerSpeed = 0.15 + layerIndex * 0.1;
+                group.add(particles);
+            });
+
+            scene.add(group);
+            return group;
+        }
+
+        function createReverseLayers(scene) {
+            const group = new THREE.Group();
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.3, 32, 32),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF6B35,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 2.0
+                })
+            );
+            group.add(core);
+
+            [0.4, 0.5, 0.6].forEach((radius, layerIndex) => {
+                const particleCount = 80 - layerIndex * 20;
+                const geometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(particleCount * 3);
+                for (let i = 0; i < particleCount; i++) {
+                    const phi = Math.acos(2 * Math.random() - 1);
+                    const theta = Math.random() * Math.PI * 2;
+                    positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+                    positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+                    positions[i * 3 + 2] = radius * Math.cos(phi);
+                }
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                const material = new THREE.PointsMaterial({
+                    color: 0xFF6B35,
+                    size: 0.05 + layerIndex * 0.01,
+                    transparent: true,
+                    opacity: 0.8 - layerIndex * 0.15,
+                    blending: THREE.AdditiveBlending
+                });
+                const particles = new THREE.Points(geometry, material);
+                particles.userData.isParticles = true;
+                // Alternating directions
+                particles.userData.layerSpeed = layerIndex % 2 === 0 ? 0.3 : -0.3;
+                group.add(particles);
+            });
+
+            scene.add(group);
+            return group;
+        }
+
+        function createPulsingLayers(scene) {
+            const group = new THREE.Group();
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.3, 32, 32),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF6B35,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 2.0
+                })
+            );
+            group.add(core);
+
+            [0.4, 0.5, 0.6].forEach((radius, layerIndex) => {
+                const particleCount = 80 - layerIndex * 20;
+                const geometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(particleCount * 3);
+                for (let i = 0; i < particleCount; i++) {
+                    const phi = Math.acos(2 * Math.random() - 1);
+                    const theta = Math.random() * Math.PI * 2;
+                    positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+                    positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+                    positions[i * 3 + 2] = radius * Math.cos(phi);
+                }
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                const material = new THREE.PointsMaterial({
+                    color: 0xFF6B35,
+                    size: 0.05 + layerIndex * 0.01,
+                    transparent: true,
+                    opacity: 0.8 - layerIndex * 0.15,
+                    blending: THREE.AdditiveBlending
+                });
+                const particles = new THREE.Points(geometry, material);
+                particles.userData.isParticles = true;
+                particles.userData.radialPulse = true;
+                particles.userData.layerSpeed = 0.2 + layerIndex * 0.1;
+                group.add(particles);
+            });
+
+            scene.add(group);
+            return group;
+        }
+
+        function createHybridV2(scene) {
+            const group = new THREE.Group();
+
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.35, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF6B35,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 3.0
+                })
+            );
+            core.userData.isCore = true;
+
+            // Gradient halo (instead of solid)
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            const gradient = ctx.createRadialGradient(128, 128, 50, 128, 128, 128);
+            gradient.addColorStop(0, 'rgba(255, 107, 53, 0.5)');
+            gradient.addColorStop(0.5, 'rgba(255, 200, 100, 0.3)');
+            gradient.addColorStop(1, 'rgba(255, 107, 53, 0)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 256, 256);
+            const texture = new THREE.CanvasTexture(canvas);
+            const halo = new THREE.Mesh(
+                new THREE.SphereGeometry(0.65, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    map: texture,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            halo.userData.isPulsing = true;
+            halo.userData.largeScale = true;
+
+            const particleCount = 120;
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(particleCount * 3);
+            for (let i = 0; i < particleCount; i++) {
+                const phi = Math.acos(2 * Math.random() - 1);
+                const theta = Math.random() * Math.PI * 2;
+                const radius = 0.5;
+                positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+                positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+                positions[i * 3 + 2] = radius * Math.cos(phi);
+            }
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            const material = new THREE.PointsMaterial({
+                color: 0xFF6B35,
+                size: 0.06,
+                transparent: true,
+                opacity: 0.7,
+                blending: THREE.AdditiveBlending
+            });
+            const particles = new THREE.Points(geometry, material);
+            particles.userData.isParticles = true;
+
+            const elasticShell = new THREE.Mesh(
+                new THREE.SphereGeometry(0.4, 32, 32),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF6B35,
+                    transparent: true,
+                    opacity: 0.3
+                })
+            );
+            elasticShell.userData.isPulsing = true;
+            elasticShell.userData.elastic = true;
+
+            group.add(core);
+            group.add(elasticShell);
+            group.add(particles);
+            group.add(halo);
+            scene.add(group);
+            return group;
+        }
+
+        function createHybridV3(scene) {
+            const group = new THREE.Group();
+
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.3, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF6B35,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 3.0
+                })
+            );
+            core.userData.isCore = true;
+            group.add(core);
+
+            // 4 particle layers
+            [0.38, 0.46, 0.54, 0.62].forEach((radius, layerIndex) => {
+                const particleCount = 80 - layerIndex * 15;
+                const geometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(particleCount * 3);
+                for (let i = 0; i < particleCount; i++) {
+                    const phi = Math.acos(2 * Math.random() - 1);
+                    const theta = Math.random() * Math.PI * 2;
+                    positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+                    positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+                    positions[i * 3 + 2] = radius * Math.cos(phi);
+                }
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                const material = new THREE.PointsMaterial({
+                    color: 0xFF6B35,
+                    size: 0.04 + layerIndex * 0.01,
+                    transparent: true,
+                    opacity: 0.9 - layerIndex * 0.15,
+                    blending: THREE.AdditiveBlending
+                });
+                const particles = new THREE.Points(geometry, material);
+                particles.userData.isParticles = true;
+                particles.userData.layerSpeed = 0.15 + layerIndex * 0.1;
+                group.add(particles);
+            });
+
+            const halo = new THREE.Mesh(
+                new THREE.SphereGeometry(0.7, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    color: 0xFF6B35,
+                    transparent: true,
+                    opacity: 0.15,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            halo.userData.isPulsing = true;
+            halo.userData.largeScale = true;
+
+            const elasticShell = new THREE.Mesh(
+                new THREE.SphereGeometry(0.35, 32, 32),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF6B35,
+                    transparent: true,
+                    opacity: 0.25
+                })
+            );
+            elasticShell.userData.isPulsing = true;
+            elasticShell.userData.elastic = true;
+
+            group.add(elasticShell);
+            group.add(halo);
+            scene.add(group);
+            return group;
+        }
+
+        function createHybridElite(scene) {
+            const group = new THREE.Group();
+
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.3, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF6B35,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 3.5
+                })
+            );
+            core.userData.isCore = true;
+            group.add(core);
+
+            // 4 particle layers
+            [0.38, 0.46, 0.54, 0.62].forEach((radius, layerIndex) => {
+                const particleCount = 80 - layerIndex * 15;
+                const geometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(particleCount * 3);
+                for (let i = 0; i < particleCount; i++) {
+                    const phi = Math.acos(2 * Math.random() - 1);
+                    const theta = Math.random() * Math.PI * 2;
+                    positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+                    positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+                    positions[i * 3 + 2] = radius * Math.cos(phi);
+                }
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                const material = new THREE.PointsMaterial({
+                    color: 0xFF6B35,
+                    size: 0.04 + layerIndex * 0.01,
+                    transparent: true,
+                    opacity: 0.9 - layerIndex * 0.15,
+                    blending: THREE.AdditiveBlending
+                });
+                const particles = new THREE.Points(geometry, material);
+                particles.userData.isParticles = true;
+                particles.userData.layerSpeed = 0.15 + layerIndex * 0.1;
+                group.add(particles);
+            });
+
+            // Gradient halo
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            const gradient = ctx.createRadialGradient(128, 128, 50, 128, 128, 128);
+            gradient.addColorStop(0, 'rgba(255, 107, 53, 0.5)');
+            gradient.addColorStop(0.5, 'rgba(255, 200, 100, 0.3)');
+            gradient.addColorStop(1, 'rgba(255, 107, 53, 0)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 256, 256);
+            const texture = new THREE.CanvasTexture(canvas);
+            const halo = new THREE.Mesh(
+                new THREE.SphereGeometry(0.7, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    map: texture,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            halo.userData.isPulsing = true;
+            halo.userData.largeScale = true;
+
+            const elasticShell = new THREE.Mesh(
+                new THREE.SphereGeometry(0.35, 32, 32),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF6B35,
+                    transparent: true,
+                    opacity: 0.25
+                })
+            );
+            elasticShell.userData.isPulsing = true;
+            elasticShell.userData.elastic = true;
+            elasticShell.userData.spring = true;
+
+            group.add(elasticShell);
+            group.add(halo);
+            scene.add(group);
+            return group;
+        }
+
+        function createHybridUltimate(scene) {
+            const group = new THREE.Group();
+
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.3, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF6B35,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 4.0
+                })
+            );
+            core.userData.isCore = true;
+            core.userData.pulseDramatic = true;
+            group.add(core);
+
+            // 4 particle layers with reverse rotation
+            [0.38, 0.46, 0.54, 0.62].forEach((radius, layerIndex) => {
+                const particleCount = 90 - layerIndex * 15;
+                const geometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(particleCount * 3);
+                for (let i = 0; i < particleCount; i++) {
+                    const phi = Math.acos(2 * Math.random() - 1);
+                    const theta = Math.random() * Math.PI * 2;
+                    positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+                    positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+                    positions[i * 3 + 2] = radius * Math.cos(phi);
+                }
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                const material = new THREE.PointsMaterial({
+                    color: 0xFF6B35,
+                    size: 0.045 + layerIndex * 0.01,
+                    transparent: true,
+                    opacity: 0.95 - layerIndex * 0.15,
+                    blending: THREE.AdditiveBlending
+                });
+                const particles = new THREE.Points(geometry, material);
+                particles.userData.isParticles = true;
+                particles.userData.layerSpeed = layerIndex % 2 === 0 ? 0.25 : -0.25;
+                group.add(particles);
+            });
+
+            // Gradient halo with animation
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            const gradient = ctx.createRadialGradient(128, 128, 45, 128, 128, 128);
+            gradient.addColorStop(0, 'rgba(255, 107, 53, 0.6)');
+            gradient.addColorStop(0.3, 'rgba(255, 150, 80, 0.4)');
+            gradient.addColorStop(0.6, 'rgba(255, 200, 120, 0.2)');
+            gradient.addColorStop(1, 'rgba(255, 107, 53, 0)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 256, 256);
+            const texture = new THREE.CanvasTexture(canvas);
+            const halo = new THREE.Mesh(
+                new THREE.SphereGeometry(0.75, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    map: texture,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            halo.userData.isPulsing = true;
+            halo.userData.largeScale = true;
+            halo.userData.rotatingHalo = true;
+
+            const elasticShell = new THREE.Mesh(
+                new THREE.SphereGeometry(0.35, 32, 32),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF6B35,
+                    transparent: true,
+                    opacity: 0.3
+                })
+            );
+            elasticShell.userData.isPulsing = true;
+            elasticShell.userData.elastic = true;
+            elasticShell.userData.spring = true;
+
+            group.add(elasticShell);
+            group.add(halo);
+            scene.add(group);
+            return group;
+        }
+
+        function createTheOne(scene) {
+            const group = new THREE.Group();
+
+            // Perfect core
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.32, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF6B35,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 3.5
+                })
+            );
+            core.userData.isCore = true;
+            core.userData.pulseDramatic = true;
+            group.add(core);
+
+            // Optimal particle layers (3 layers, balanced)
+            [0.42, 0.52, 0.62].forEach((radius, layerIndex) => {
+                const particleCount = 85 - layerIndex * 20;
+                const geometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(particleCount * 3);
+                for (let i = 0; i < particleCount; i++) {
+                    const phi = Math.acos(2 * Math.random() - 1);
+                    const theta = Math.random() * Math.PI * 2;
+                    positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+                    positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+                    positions[i * 3 + 2] = radius * Math.cos(phi);
+                }
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                const material = new THREE.PointsMaterial({
+                    color: 0xFF6B35,
+                    size: 0.05 + layerIndex * 0.008,
+                    transparent: true,
+                    opacity: 0.88 - layerIndex * 0.12,
+                    blending: THREE.AdditiveBlending
+                });
+                const particles = new THREE.Points(geometry, material);
+                particles.userData.isParticles = true;
+                particles.userData.layerSpeed = layerIndex % 2 === 0 ? 0.22 : -0.18;
+                group.add(particles);
+            });
+
+            // Perfect gradient halo
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            const gradient = ctx.createRadialGradient(128, 128, 48, 128, 128, 128);
+            gradient.addColorStop(0, 'rgba(255, 107, 53, 0.55)');
+            gradient.addColorStop(0.35, 'rgba(255, 170, 90, 0.35)');
+            gradient.addColorStop(0.65, 'rgba(255, 200, 130, 0.18)');
+            gradient.addColorStop(1, 'rgba(255, 107, 53, 0)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 256, 256);
+            const texture = new THREE.CanvasTexture(canvas);
+            const halo = new THREE.Mesh(
+                new THREE.SphereGeometry(0.72, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    map: texture,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            halo.userData.isPulsing = true;
+            halo.userData.largeScale = true;
+
+            // Subtle elastic shell
+            const elasticShell = new THREE.Mesh(
+                new THREE.SphereGeometry(0.38, 32, 32),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF6B35,
+                    transparent: true,
+                    opacity: 0.28
+                })
+            );
+            elasticShell.userData.isPulsing = true;
+            elasticShell.userData.elastic = true;
+            elasticShell.userData.gentle = true;
+
+            group.add(elasticShell);
             group.add(halo);
             scene.add(group);
             return group;
