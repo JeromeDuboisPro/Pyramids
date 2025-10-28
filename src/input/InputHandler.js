@@ -80,9 +80,6 @@ export class InputHandler {
      * @param {MouseEvent|TouchEvent} event
      */
     onPointerDown(event) {
-        // DEBUG: Log all button presses
-        console.log(`🖱️ Button pressed: ${event.button} (0=left, 1=middle, 2=right)`);
-
         // Prevent default touch behavior (page scrolling)
         if (event.type === 'touchstart') {
             event.preventDefault();
@@ -90,7 +87,6 @@ export class InputHandler {
 
         // Check for middle mouse button (button = 1) for panning
         if (event.button === 1) {
-            console.log('🖱️ Starting PAN mode (middle button)');
             event.preventDefault();
             this.isPanning = true;
             this.previousPanPosition = {
@@ -103,7 +99,6 @@ export class InputHandler {
 
         // Check for right mouse button (button = 2) for rotation
         if (event.button === 2) {
-            console.log('🖱️ Starting ROTATE mode (right button)');
             event.preventDefault();
             this.isRotating = true;
             this.previousRotatePosition = {
@@ -359,7 +354,6 @@ export class InputHandler {
 
         // Handle panning if middle button is held
         if (this.isPanning) {
-            console.log('↔️ PANNING camera...');
             const deltaX = event.clientX - this.previousPanPosition.x;
             const deltaY = event.clientY - this.previousPanPosition.y;
 
@@ -455,13 +449,11 @@ export class InputHandler {
         if (event.button === 1) {
             this.isPanning = false;
             this.canvas.style.cursor = 'default';
-            console.log('⏹️ Panning stopped');
         }
         // Right button released
         if (event.button === 2) {
             this.isRotating = false;
             this.canvas.style.cursor = 'default';
-            console.log('⏹️ Rotation stopped');
         }
     }
 
