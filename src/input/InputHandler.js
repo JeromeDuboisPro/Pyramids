@@ -29,9 +29,18 @@ export class InputHandler {
         this.tooltip = document.getElementById('sphere-tooltip');
         this.hoveredSphereId = null;
 
+        // Camera controls state
+        this.isPanning = false;
+        this.previousPanPosition = { x: 0, y: 0 };
+        this.zoomLevel = 1.0;  // 1.0 = default view
+        this.minZoom = 0.5;    // Can zoom out to 2x area
+        this.maxZoom = 3.0;    // Can zoom in to 3x magnification
+
         // Bind event handlers
         this.onPointerDown = this.onPointerDown.bind(this);
         this.onPointerMove = this.onPointerMove.bind(this);
+        this.onPointerUp = this.onPointerUp.bind(this);
+        this.onWheel = this.onWheel.bind(this);
 
         // Setup event listeners
         this.setupEventListeners();
@@ -46,11 +55,13 @@ export class InputHandler {
         // Mouse events
         this.canvas.addEventListener('mousedown', this.onPointerDown);
         this.canvas.addEventListener('mousemove', this.onPointerMove);
+        this.canvas.addEventListener('mouseup', this.onPointerUp);
+        this.canvas.addEventListener('wheel', this.onWheel, { passive: false });
 
         // Touch events
         this.canvas.addEventListener('touchstart', this.onPointerDown, { passive: false });
 
-        console.log('🖱️  Mouse + touch events registered');
+        console.log('🖱️  Mouse + touch + camera controls registered');
     }
 
     /**
@@ -61,6 +72,23 @@ export class InputHandler {
         // Prevent default touch behavior (page scrolling)
         if (event.type === 'touchstart') {
             event.preventDefault();
+        }
+
+        // Check for middle mouse button (button = 1) for panning
+        if (event.button === 1) {
+            event.preventDefault();
+            this.isPanning = true;
+            this.previousPanPosition = {
+                x: event.clientX,
+                y: event.clientY
+            };
+            this.canvas.style.cursor = 'grabbing';
+            return;
+        }
+
+        // Left mouse button (button = 0) for sphere interaction
+        if (event.button !== 0 && event.type !== 'touchstart') {
+            return;
         }
 
         // Get normalized pointer position
@@ -248,10 +276,28 @@ export class InputHandler {
     }
 
     /**
-     * Handle pointer move (for hover tooltip)
+     * Handle pointer move (for hover tooltip and panning)
      * @param {MouseEvent} event
      */
     onPointerMove(event) {
+        // Handle panning if middle button is held
+        if (this.isPanning) {
+            const deltaX = event.clientX - this.previousPanPosition.x;
+            const deltaY = event.clientY - this.previousPanPosition.y;
+
+            this.previousPanPosition = {
+                x: event.clientX,
+                y: event.clientY
+            };
+
+            // Pan camera (scale by zoom level and viewport size)
+            const panSpeed = 0.02 / this.zoomLevel;
+            this.camera.position.x -= deltaX * panSpeed;
+            this.camera.position.y += deltaY * panSpeed;
+
+            return; // Skip tooltip while panning
+        }
+
         // Get pointer position
         const rect = this.canvas.getBoundingClientRect();
         const x = event.clientX - rect.left;
@@ -323,11 +369,51 @@ export class InputHandler {
     }
 
     /**
+     * Handle pointer up (end panning)
+     * @param {MouseEvent} event
+     */
+    onPointerUp(event) {
+        if (event.button === 1 || this.isPanning) {
+            this.isPanning = false;
+            this.canvas.style.cursor = 'default';
+        }
+    }
+
+    /**
+     * Handle mouse wheel (zooming)
+     * @param {WheelEvent} event
+     */
+    onWheel(event) {
+        event.preventDefault();
+
+        // Zoom speed
+        const zoomSpeed = 0.001;
+        const delta = -event.deltaY * zoomSpeed;
+
+        // Update zoom level
+        this.zoomLevel *= (1 + delta);
+        this.zoomLevel = Math.max(this.minZoom, Math.min(this.maxZoom, this.zoomLevel));
+
+        // Update orthographic camera frustum
+        const aspect = window.innerWidth / window.innerHeight;
+        const baseViewSize = 10; // Base view size from SceneManager
+        const viewSize = baseViewSize / this.zoomLevel;
+
+        this.camera.left = -viewSize * aspect;
+        this.camera.right = viewSize * aspect;
+        this.camera.top = viewSize;
+        this.camera.bottom = -viewSize;
+        this.camera.updateProjectionMatrix();
+    }
+
+    /**
      * Cleanup event listeners
      */
     dispose() {
         this.canvas.removeEventListener('mousedown', this.onPointerDown);
         this.canvas.removeEventListener('mousemove', this.onPointerMove);
+        this.canvas.removeEventListener('mouseup', this.onPointerUp);
+        this.canvas.removeEventListener('wheel', this.onWheel);
         this.canvas.removeEventListener('touchstart', this.onPointerDown);
 
         console.log('🗑️  Input handler disposed');

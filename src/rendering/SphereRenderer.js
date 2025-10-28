@@ -168,10 +168,23 @@ export class SphereRenderer {
 
                 // Update inner glowing core
                 if (child.userData.isCore) {
+                    // Regenerate cellular texture with new color for consistency
+                    const newTexture = this.createCellularPlasmaTexture(newColor);
+
+                    // Dispose old textures
+                    if (child.material.map) child.material.map.dispose();
+                    if (child.material.emissiveMap && child.material.emissiveMap !== child.material.map) {
+                        child.material.emissiveMap.dispose();
+                    }
+
+                    // Update material with new texture
+                    child.material.map = newTexture;
+                    child.material.emissiveMap = newTexture;
                     child.material.color.setHex(newColor);
                     child.material.emissive.setHex(newColor);
                     // Set base intensity: bright for owned, dim for neutral/capturing
                     child.material.emissiveIntensity = isFullyOwned ? 2.0 : 0.8;
+                    child.material.needsUpdate = true;
                     hasCore = true;
                     return;
                 }
