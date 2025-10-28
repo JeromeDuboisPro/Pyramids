@@ -107,10 +107,11 @@ export class InputHandler {
             };
 
             // Initialize spherical angles from current camera position if first rotation
+            // Calculate relative to center of scene (0, 0, 0)
             if (this.cameraTheta === 0 && this.cameraPhi === 0) {
-                const dx = this.camera.position.x;
-                const dy = this.camera.position.y;
-                const dz = this.camera.position.z;
+                const dx = this.camera.position.x - 0;
+                const dy = this.camera.position.y - 0;
+                const dz = this.camera.position.z - 0;
                 this.cameraDistance = Math.sqrt(dx*dx + dy*dy + dz*dz);
                 this.cameraTheta = Math.atan2(dy, dx);
                 this.cameraPhi = Math.acos(dz / this.cameraDistance);
@@ -324,12 +325,8 @@ export class InputHandler {
                 y: event.clientY
             };
 
-            // Update rotation pivot to current view center (pan position preserved)
-            this.rotationPivot.set(
-                this.camera.position.x,
-                this.camera.position.y,
-                0
-            );
+            // Rotation pivot is always the center of the scene (0, 0, 0)
+            this.rotationPivot.set(0, 0, 0);
 
             // Update angles based on mouse movement
             const rotateSpeed = 0.005;
