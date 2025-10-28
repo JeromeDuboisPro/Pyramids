@@ -185,12 +185,35 @@ export class SceneManager {
                     child.material.emissiveIntensity = basePulse + Math.sin(time * pulseSpeed) * pulseVariation;
                 }
 
-                // Animate selection halo (pulsing effect)
+                // Animate selection indicators (multi-layer pulsing)
                 if (child.userData.isSelectionHalo && child.userData.isPulsing) {
-                    const pulseSpeed = 2.0;
-                    const opacityBase = 0.5;
-                    const opacityVariation = 0.2;
-                    child.material.opacity = opacityBase + Math.sin(time * pulseSpeed) * opacityVariation;
+                    const pulseType = child.userData.pulseType || 'outer';
+
+                    if (pulseType === 'outer') {
+                        // Outer ring: Fast aggressive pulse
+                        const pulseSpeed = 3.0;
+                        const opacityBase = 0.8;
+                        const opacityVariation = 0.2;
+                        child.material.opacity = opacityBase + Math.sin(time * pulseSpeed) * opacityVariation;
+                    } else if (pulseType === 'inner') {
+                        // Inner ring: Slower counter-pulse
+                        const pulseSpeed = 2.0;
+                        const opacityBase = 0.6;
+                        const opacityVariation = 0.3;
+                        child.material.opacity = opacityBase + Math.sin(time * pulseSpeed + Math.PI) * opacityVariation;
+                    } else if (pulseType === 'sphere') {
+                        // Glow sphere: Gentle scale pulse
+                        const pulseSpeed = 1.5;
+                        const scaleBase = 1.0;
+                        const scaleVariation = 0.08;
+                        const scale = scaleBase + Math.sin(time * pulseSpeed) * scaleVariation;
+                        child.scale.setScalar(scale);
+
+                        // Also pulse opacity
+                        const opacityBase = 0.15;
+                        const opacityVariation = 0.08;
+                        child.material.opacity = opacityBase + Math.sin(time * pulseSpeed) * opacityVariation;
+                    }
                 }
 
                 // Pulse point light intensity

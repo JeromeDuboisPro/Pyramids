@@ -237,7 +237,11 @@ export class StreamRenderer {
         this.streams.forEach((stream, key) => {
             // Check if it's time to send a new particle
             const timeSinceLastParticle = this.time - stream.lastParticleTime;
-            if (timeSinceLastParticle >= this.particleInterval) {
+
+            // Only send particles if target is NOT fully captured (< 100% energy)
+            const targetNotFull = stream.target.energy < 100;
+
+            if (timeSinceLastParticle >= this.particleInterval && targetNotFull) {
                 // Create new particle
                 const particle = this.createParticle(stream);
                 const travelTime = stream.curve.getLength() / 3.0; // 3 units per second

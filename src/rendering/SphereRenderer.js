@@ -266,50 +266,85 @@ export class SphereRenderer {
     }
 
     /**
-     * Add selection halo to sphere (replaces old outline system)
+     * Add selection indicator to sphere (multi-layer pulsing effect)
      * @param {THREE.Group} sphereGroup - Sphere to select
      */
     addSelectionOutline(sphereGroup) {
-        // Remove existing selection halo if any
+        // Remove existing selection indicators if any
         this.removeSelectionOutline(sphereGroup);
 
         const radius = CONFIG.SPHERE_RADIUS;
 
-        // Get sphere color for halo
-        let haloColor = 0xFFFFFF; // Default white
+        // Get sphere color
+        let sphereColor = 0xFFFFFF;
         const shellMesh = sphereGroup.children.find(child => child.userData.isShell);
         if (shellMesh && shellMesh.material) {
-            haloColor = shellMesh.material.color.getHex();
+            sphereColor = shellMesh.material.color.getHex();
         }
 
-        // Create selection halo (flat ring visible from top-down)
-        const haloGeometry = new THREE.RingGeometry(radius * 1.1, radius * 1.6, 32);
-        const haloMaterial = new THREE.MeshBasicMaterial({
-            color: haloColor,
+        // Outer pulsing ring (bright white for high visibility)
+        const outerRingGeometry = new THREE.RingGeometry(radius * 1.2, radius * 1.8, 32);
+        const outerRingMaterial = new THREE.MeshBasicMaterial({
+            color: 0xFFFFFF,  // Bright white for maximum visibility
             transparent: true,
-            opacity: 0.5,  // Brighter than normal halos
+            opacity: 0.8,  // High opacity
             side: THREE.DoubleSide,
             blending: THREE.AdditiveBlending
         });
 
-        const haloMesh = new THREE.Mesh(haloGeometry, haloMaterial);
-        haloMesh.rotation.x = Math.PI / 2; // Lay flat (visible from top)
-        haloMesh.userData.isSelectionHalo = true;
-        haloMesh.userData.isPulsing = true; // Animate for selection visibility
-        sphereGroup.add(haloMesh);
+        const outerRing = new THREE.Mesh(outerRingGeometry, outerRingMaterial);
+        outerRing.rotation.x = Math.PI / 2; // Lay flat
+        outerRing.userData.isSelectionHalo = true;
+        outerRing.userData.isPulsing = true;
+        outerRing.userData.pulseType = 'outer'; // Fast pulse
+        sphereGroup.add(outerRing);
+
+        // Inner ring (sphere color for context)
+        const innerRingGeometry = new THREE.RingGeometry(radius * 1.0, radius * 1.15, 32);
+        const innerRingMaterial = new THREE.MeshBasicMaterial({
+            color: sphereColor,
+            transparent: true,
+            opacity: 0.6,
+            side: THREE.DoubleSide,
+            blending: THREE.AdditiveBlending
+        });
+
+        const innerRing = new THREE.Mesh(innerRingGeometry, innerRingMaterial);
+        innerRing.rotation.x = Math.PI / 2;
+        innerRing.userData.isSelectionHalo = true;
+        innerRing.userData.isPulsing = true;
+        innerRing.userData.pulseType = 'inner'; // Slower pulse for variety
+        sphereGroup.add(innerRing);
+
+        // Outer glow sphere (subtle pulsing aura)
+        const glowSphereGeometry = new THREE.SphereGeometry(radius * 1.4, 32, 32);
+        const glowSphereMaterial = new THREE.MeshBasicMaterial({
+            color: 0xFFFFFF,
+            transparent: true,
+            opacity: 0.15,  // Very subtle
+            blending: THREE.AdditiveBlending,
+            side: THREE.BackSide  // Only visible from outside
+        });
+
+        const glowSphere = new THREE.Mesh(glowSphereGeometry, glowSphereMaterial);
+        glowSphere.userData.isSelectionHalo = true;
+        glowSphere.userData.isPulsing = true;
+        glowSphere.userData.pulseType = 'sphere'; // Gentle scale pulse
+        sphereGroup.add(glowSphere);
     }
 
     /**
-     * Remove selection halo from sphere
+     * Remove selection indicators from sphere
      * @param {THREE.Group} sphereGroup - Sphere to deselect
      */
     removeSelectionOutline(sphereGroup) {
-        const halo = sphereGroup.children.find(child => child.userData.isSelectionHalo);
-        if (halo) {
+        // Find all selection indicators (there may be multiple)
+        const halos = sphereGroup.children.filter(child => child.userData.isSelectionHalo);
+        halos.forEach(halo => {
             halo.geometry.dispose();
             halo.material.dispose();
             sphereGroup.remove(halo);
-        }
+        });
     }
 
     /**
