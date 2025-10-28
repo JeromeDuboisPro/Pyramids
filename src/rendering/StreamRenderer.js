@@ -1,8 +1,8 @@
 /**
  * StreamRenderer
  *
- * Creates and animates visible connection streams (pulse beams) between spheres.
- * Uses TubeGeometry for visible beams with flowing texture and particle effects.
+ * Creates particle-based energy transmission between spheres.
+ * Each connection sends ONE particle at regular intervals with impact burst effects.
  */
 
 import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
@@ -13,6 +13,7 @@ export class StreamRenderer {
         this.scene = scene;
         this.streams = new Map(); // connectionKey -> stream object
         this.time = 0;
+        this.particleInterval = 1.0; // Send particle every 1 second
     }
 
     /**
@@ -30,9 +31,6 @@ export class StreamRenderer {
             if (!this.streams.has(key)) {
                 // Create new stream
                 this.createStream(conn.source, conn.target, key);
-            } else {
-                // Update existing stream (position might change in future)
-                // For now, connections are static
             }
         });
 
@@ -57,35 +55,36 @@ export class StreamRenderer {
             target.position.clone()
         ]);
 
-        // Create tube geometry along the path
+        // Create transparent tube geometry
         const tubeGeometry = new THREE.TubeGeometry(
             curve,
             20,    // segments
-            0.08,  // radius (thin beam)
+            0.06,  // radius (thin tube)
             8,     // radial segments
             false  // not closed
         );
 
-        // Create material with flowing effect
-        const color = new THREE.Color(CONFIG.PLAYER_COLOR);
+        // Determine color based on source owner
+        let tubeColor = CONFIG.PLAYER_COLOR;
+        if (source.owner === 'enemy') {
+            tubeColor = CONFIG.ENEMY_COLOR;
+        } else if (source.owner === 'neutral') {
+            tubeColor = CONFIG.NEUTRAL_COLOR;
+        }
 
-        const material = new THREE.MeshBasicMaterial({
-            color: color,
+        const tubeMaterial = new THREE.MeshBasicMaterial({
+            color: tubeColor,
             transparent: true,
-            opacity: 0.6,
+            opacity: 0.2,  // Very transparent
             blending: THREE.AdditiveBlending,
             side: THREE.DoubleSide
         });
 
-        const tubeMesh = new THREE.Mesh(tubeGeometry, material);
-
-        // Create particle system along the stream
-        const particles = this.createStreamParticles(source.position, target.position, color);
+        const tubeMesh = new THREE.Mesh(tubeGeometry, tubeMaterial);
 
         // Group everything together
         const streamGroup = new THREE.Group();
         streamGroup.add(tubeMesh);
-        streamGroup.add(particles);
 
         this.scene.add(streamGroup);
 
@@ -93,58 +92,106 @@ export class StreamRenderer {
         this.streams.set(key, {
             group: streamGroup,
             tubeMesh: tubeMesh,
-            particles: particles,
-            material: material,
+            curve: curve,
+            material: tubeMaterial,
             source: source,
             target: target,
-            createdAt: performance.now()
+            createdAt: performance.now(),
+            lastParticleTime: 0,
+            activeParticles: [],  // Array of {mesh, progress, speed}
+            burstEffects: [],     // Array of burst effect meshes
+            color: tubeColor
         });
 
         console.log(`✨ Created stream: ${key}`);
     }
 
     /**
-     * Create particle system along stream path
-     * @param {THREE.Vector3} start
-     * @param {THREE.Vector3} end
-     * @param {THREE.Color} color
-     * @returns {THREE.Points}
+     * Create a single energy particle
+     * @param {Object} stream - Stream data
+     * @returns {THREE.Mesh} Particle mesh
      */
-    createStreamParticles(start, end, color) {
-        const particleCount = 30;
-        const positions = new Float32Array(particleCount * 3);
-        const velocities = new Float32Array(particleCount); // Store progress along path
-
-        // Initialize particles along the line
-        for (let i = 0; i < particleCount; i++) {
-            const t = i / particleCount;
-            const pos = new THREE.Vector3().lerpVectors(start, end, t);
-
-            positions[i * 3] = pos.x;
-            positions[i * 3 + 1] = pos.y;
-            positions[i * 3 + 2] = pos.z;
-
-            // Random velocity for variety
-            velocities[i] = t + Math.random() * 0.1;
-        }
-
-        const geometry = new THREE.BufferGeometry();
-        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        geometry.setAttribute('velocity', new THREE.BufferAttribute(velocities, 1));
-
-        const material = new THREE.PointsMaterial({
-            color: color,
-            size: 0.15,
+    createParticle(stream) {
+        const particleGeometry = new THREE.SphereGeometry(0.12, 16, 16);
+        const particleMaterial = new THREE.MeshBasicMaterial({
+            color: stream.color,
             transparent: true,
-            opacity: 0.8,
-            blending: THREE.AdditiveBlending,
-            sizeAttenuation: true
+            opacity: 1.0,
+            blending: THREE.AdditiveBlending
         });
 
-        const points = new THREE.Points(geometry, material);
-        points.userData.velocities = velocities; // Store for animation
+        const particle = new THREE.Mesh(particleGeometry, particleMaterial);
 
-        return points;
+        // Add point light to particle for glow effect
+        const light = new THREE.PointLight(stream.color, 2.0, 3.0);
+        particle.add(light);
+
+        stream.group.add(particle);
+
+        return particle;
+    }
+
+    /**
+     * Create burst effect on particle impact
+     * @param {THREE.Vector3} position - Impact position
+     * @param {number} color - Burst color
+     * @param {Object} stream - Stream data
+     */
+    createImpactBurst(position, color, stream) {
+        const burstCount = 8;
+        const burstGeometry = new THREE.SphereGeometry(0.08, 8, 8);
+
+        for (let i = 0; i < burstCount; i++) {
+            const burstMaterial = new THREE.MeshBasicMaterial({
+                color: color,
+                transparent: true,
+                opacity: 1.0,
+                blending: THREE.AdditiveBlending
+            });
+
+            const burst = new THREE.Mesh(burstGeometry, burstMaterial);
+            burst.position.copy(position);
+
+            // Random velocity for burst particles
+            const angle = (i / burstCount) * Math.PI * 2;
+            burst.userData.velocity = new THREE.Vector3(
+                Math.cos(angle) * 2.0,
+                Math.sin(angle) * 2.0,
+                (Math.random() - 0.5) * 1.0
+            );
+            burst.userData.lifetime = 0.5; // 0.5 seconds
+            burst.userData.age = 0;
+
+            stream.group.add(burst);
+            stream.burstEffects.push(burst);
+        }
+
+        console.log(`💥 Impact burst at target: ${stream.target.id}`);
+
+        // Trigger sphere impact response
+        this.triggerSphereImpact(stream.target);
+    }
+
+    /**
+     * Trigger visual impact response on target sphere
+     * @param {Sphere} targetSphere - Target sphere entity
+     */
+    triggerSphereImpact(targetSphere) {
+        if (!targetSphere.mesh) return;
+
+        const coreMesh = targetSphere.mesh.children.find(child => child.userData.isCore);
+        if (!coreMesh) return;
+
+        // Boost rotation temporarily
+        const currentSpeed = coreMesh.userData.currentRotationSpeed || 0;
+        coreMesh.userData.rotationBoost = 2.0; // 2x boost
+        coreMesh.userData.boostStartTime = performance.now();
+        coreMesh.userData.boostDuration = 0.3; // 300ms boost
+
+        // Scale pulse for impact vibration
+        coreMesh.userData.impactPulse = true;
+        coreMesh.userData.impactStartTime = performance.now();
+        coreMesh.userData.impactDuration = 0.2; // 200ms vibration
     }
 
     /**
@@ -155,12 +202,22 @@ export class StreamRenderer {
         const stream = this.streams.get(key);
         if (!stream) return;
 
-        // Dispose geometries and materials
+        // Dispose tube geometry and materials
         stream.tubeMesh.geometry.dispose();
         stream.tubeMesh.material.dispose();
 
-        stream.particles.geometry.dispose();
-        stream.particles.material.dispose();
+        // Dispose active particles
+        stream.activeParticles.forEach(particleData => {
+            if (particleData.mesh.geometry) particleData.mesh.geometry.dispose();
+            if (particleData.mesh.material) particleData.mesh.material.dispose();
+            // Dispose particle's point light (no disposal needed for lights)
+        });
+
+        // Dispose burst effects
+        stream.burstEffects.forEach(burst => {
+            if (burst.geometry) burst.geometry.dispose();
+            if (burst.material) burst.material.dispose();
+        });
 
         // Remove from scene
         this.scene.remove(stream.group);
@@ -171,61 +228,176 @@ export class StreamRenderer {
     }
 
     /**
-     * Animate all streams (flowing effect)
+     * Animate all streams and particles
      * @param {number} deltaTime - Time since last frame
      */
     animate(deltaTime) {
         this.time += deltaTime;
 
         this.streams.forEach((stream, key) => {
-            // Pulse the tube opacity
-            const pulseSpeed = 2.0;
-            const pulseAmount = 0.2;
-            const basePulse = 0.6;
-            stream.material.opacity = basePulse + Math.sin(this.time * pulseSpeed) * pulseAmount;
+            // Check if it's time to send a new particle
+            const timeSinceLastParticle = this.time - stream.lastParticleTime;
+            if (timeSinceLastParticle >= this.particleInterval) {
+                // Create new particle
+                const particle = this.createParticle(stream);
+                const travelTime = stream.curve.getLength() / 3.0; // 3 units per second
+                stream.activeParticles.push({
+                    mesh: particle,
+                    progress: 0.0,
+                    speed: 1.0 / travelTime  // Progress per second
+                });
+                stream.lastParticleTime = this.time;
+            }
 
-            // Animate particles along the path
-            this.animateStreamParticles(stream);
+            // Animate active particles
+            this.animateParticles(stream, deltaTime);
+
+            // Animate burst effects
+            this.animateBurstEffects(stream, deltaTime);
+
+            // Animate tube pulsing
+            const pulseSpeed = 2.0;
+            const pulseAmount = 0.1;
+            const baseOpacity = 0.2;
+            stream.material.opacity = baseOpacity + Math.sin(this.time * pulseSpeed) * pulseAmount;
+        });
+
+        // Animate sphere impact effects
+        this.animateSphereImpacts(deltaTime);
+    }
+
+    /**
+     * Animate particles along stream path
+     * @param {Object} stream - Stream data
+     * @param {number} deltaTime - Time since last frame
+     */
+    animateParticles(stream, deltaTime) {
+        const particlesToRemove = [];
+
+        stream.activeParticles.forEach((particleData, index) => {
+            // Update progress
+            particleData.progress += particleData.speed * deltaTime;
+
+            if (particleData.progress >= 1.0) {
+                // Particle reached target - create burst effect
+                const targetPos = stream.target.position.clone();
+                this.createImpactBurst(targetPos, stream.color, stream);
+
+                // Mark for removal
+                particlesToRemove.push(index);
+
+                // Dispose particle
+                particleData.mesh.geometry.dispose();
+                particleData.mesh.material.dispose();
+                stream.group.remove(particleData.mesh);
+            } else {
+                // Update particle position along curve
+                const position = stream.curve.getPoint(particleData.progress);
+                particleData.mesh.position.copy(position);
+
+                // Particle pulsing effect
+                const pulseSpeed = 5.0;
+                const scale = 1.0 + Math.sin(this.time * pulseSpeed) * 0.3;
+                particleData.mesh.scale.setScalar(scale);
+            }
+        });
+
+        // Remove completed particles
+        for (let i = particlesToRemove.length - 1; i >= 0; i--) {
+            stream.activeParticles.splice(particlesToRemove[i], 1);
+        }
+    }
+
+    /**
+     * Animate burst effects
+     * @param {Object} stream - Stream data
+     * @param {number} deltaTime - Time since last frame
+     */
+    animateBurstEffects(stream, deltaTime) {
+        const burstsToRemove = [];
+
+        stream.burstEffects.forEach((burst, index) => {
+            burst.userData.age += deltaTime;
+
+            const agePercent = burst.userData.age / burst.userData.lifetime;
+
+            if (agePercent >= 1.0) {
+                // Burst expired
+                burstsToRemove.push(index);
+                burst.geometry.dispose();
+                burst.material.dispose();
+                stream.group.remove(burst);
+            } else {
+                // Update burst position
+                burst.position.add(burst.userData.velocity.clone().multiplyScalar(deltaTime));
+
+                // Fade out
+                burst.material.opacity = 1.0 - agePercent;
+
+                // Shrink
+                const scale = 1.0 - agePercent * 0.5;
+                burst.scale.setScalar(scale);
+            }
+        });
+
+        // Remove expired bursts
+        for (let i = burstsToRemove.length - 1; i >= 0; i--) {
+            stream.burstEffects.splice(burstsToRemove[i], 1);
+        }
+    }
+
+    /**
+     * Animate sphere impact effects (vibration and rotation boost)
+     * @param {number} deltaTime - Time since last frame
+     */
+    animateSphereImpacts(deltaTime) {
+        this.streams.forEach(stream => {
+            if (!stream.target.mesh) return;
+
+            const coreMesh = stream.target.mesh.children.find(child => child.userData.isCore);
+            if (!coreMesh) return;
+
+            const now = performance.now();
+
+            // Rotation boost effect
+            if (coreMesh.userData.rotationBoost) {
+                const elapsed = (now - coreMesh.userData.boostStartTime) / 1000;
+                if (elapsed < coreMesh.userData.boostDuration) {
+                    // Apply rotation boost
+                    const baseSpeed = coreMesh.userData.currentRotationSpeed || 0;
+                    const boost = coreMesh.userData.rotationBoost;
+                    coreMesh.rotation.y += baseSpeed * boost * deltaTime;
+                    coreMesh.rotation.x += baseSpeed * boost * deltaTime * 0.6;
+                } else {
+                    // Boost expired
+                    delete coreMesh.userData.rotationBoost;
+                    delete coreMesh.userData.boostStartTime;
+                    delete coreMesh.userData.boostDuration;
+                }
+            }
+
+            // Impact vibration effect
+            if (coreMesh.userData.impactPulse) {
+                const elapsed = (now - coreMesh.userData.impactStartTime) / 1000;
+                if (elapsed < coreMesh.userData.impactDuration) {
+                    // Vibration effect (rapid scale oscillation)
+                    const frequency = 30.0; // Hz
+                    const amplitude = 0.08;
+                    const vibration = 1.0 + Math.sin(elapsed * frequency * Math.PI * 2) * amplitude;
+                    coreMesh.scale.setScalar(vibration);
+                } else {
+                    // Vibration ended - reset scale
+                    coreMesh.scale.setScalar(1.0);
+                    delete coreMesh.userData.impactPulse;
+                    delete coreMesh.userData.impactStartTime;
+                    delete coreMesh.userData.impactDuration;
+                }
+            }
         });
     }
 
     /**
-     * Animate particles flowing along stream
-     * @param {Object} stream - Stream data
-     */
-    animateStreamParticles(stream) {
-        const particles = stream.particles;
-        const positions = particles.geometry.attributes.position.array;
-        const velocities = particles.userData.velocities;
-
-        const start = stream.source.position;
-        const end = stream.target.position;
-
-        const flowSpeed = 0.5; // Speed of particle flow
-
-        for (let i = 0; i < velocities.length; i++) {
-            // Update particle position along path
-            velocities[i] += flowSpeed * 0.016; // Assume ~60fps
-
-            // Wrap around when reaching end
-            if (velocities[i] > 1.0) {
-                velocities[i] = 0.0;
-            }
-
-            // Interpolate position
-            const t = velocities[i];
-            const pos = new THREE.Vector3().lerpVectors(start, end, t);
-
-            positions[i * 3] = pos.x;
-            positions[i * 3 + 1] = pos.y;
-            positions[i * 3 + 2] = pos.z;
-        }
-
-        particles.geometry.attributes.position.needsUpdate = true;
-    }
-
-    /**
-     * Update stream colors based on owner (for future use)
+     * Update stream colors based on owner
      * @param {string} key
      * @param {number} color - Hex color
      */
@@ -234,7 +406,7 @@ export class StreamRenderer {
         if (!stream) return;
 
         stream.material.color.setHex(color);
-        stream.particles.material.color.setHex(color);
+        stream.color = color;
     }
 
     /**

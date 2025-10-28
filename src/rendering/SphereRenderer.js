@@ -17,7 +17,61 @@ export class SphereRenderer {
     }
 
     /**
-     * Create a 3D translucent sphere
+     * Generate cellular plasma texture (S12 pattern from sphere-test.html)
+     * @param {number} color - Hex color for the plasma
+     * @param {number} cellCount - Number of cell centers (default 12)
+     * @returns {THREE.CanvasTexture}
+     */
+    createCellularPlasmaTexture(color, cellCount = 12) {
+        // Generate random cell centers
+        const cellCenters = [];
+        for (let i = 0; i < cellCount; i++) {
+            cellCenters.push({
+                x: Math.random() * 256,
+                y: Math.random() * 256
+            });
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+
+        // Convert hex color to RGB components
+        const r = (color >> 16) & 255;
+        const g = (color >> 8) & 255;
+        const b = color & 255;
+
+        // Generate cellular pattern
+        for (let x = 0; x < 256; x++) {
+            for (let y = 0; y < 256; y++) {
+                // Find distance to nearest cell center
+                let minDist = Infinity;
+                for (const center of cellCenters) {
+                    const dx = x - center.x;
+                    const dy = y - center.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    minDist = Math.min(minDist, dist);
+                }
+
+                // Create plasma wave based on distance
+                const value = Math.sin(minDist * 0.1);
+
+                // Color variation based on wave
+                const finalR = Math.floor(r * (0.7 + value * 0.3));
+                const finalG = Math.floor(g * (0.7 + value * 0.3));
+                const finalB = Math.floor(b * (0.7 + value * 0.3));
+
+                ctx.fillStyle = `rgb(${finalR}, ${finalG}, ${finalB})`;
+                ctx.fillRect(x, y, 1, 1);
+            }
+        }
+
+        return new THREE.CanvasTexture(canvas);
+    }
+
+    /**
+     * Create a 3D sphere with cellular plasma core
      * @param {THREE.Vector3} position - Position in world space
      * @param {number} color - Hex color value
      * @param {string} id - Unique identifier for this sphere
@@ -30,17 +84,17 @@ export class SphereRenderer {
 
         const radius = CONFIG.SPHERE_RADIUS;
 
-        // Use simpler materials for better iGPU compatibility
-        const isNeutral = (color === CONFIG.NEUTRAL_COLOR);
+        // Generate cellular plasma texture for this sphere
+        const cellularTexture = this.createCellularPlasmaTexture(color);
 
-        // Outer glass shell - transparent with basic material
+        // Outer glass shell - transparent
         const glassShellMaterial = new THREE.MeshStandardMaterial({
             color: color,
             transparent: true,
-            opacity: 0.4,                // Semi-transparent
+            opacity: 0.3,                // More transparent
             metalness: 0.1,
             roughness: 0.2,
-            emissive: 0x000000,          // No emissive on shell
+            emissive: 0x000000,
             emissiveIntensity: 0
         });
 
@@ -49,42 +103,34 @@ export class SphereRenderer {
         shellMesh.userData.isShell = true;
         group.add(shellMesh);
 
-        // Inner glowing core - ALL spheres have a core (neutral glows grey)
-        const coreRadius = radius * 0.6; // Larger core (60% instead of 50%)
+        // Inner cellular plasma core - uses texture map
+        const coreRadius = radius * 0.6;
         const coreMaterial = new THREE.MeshStandardMaterial({
-            color: color,
+            map: cellularTexture,            // Cellular plasma texture
             emissive: color,
-            emissiveIntensity: isNeutral ? 0.8 : 2.0,  // Dimmer glow for neutral
-            transparent: false,      // Opaque core
+            emissiveIntensity: 2.0,          // Base intensity (will be modulated by energy)
+            emissiveMap: cellularTexture,    // Use same texture for emission
+            transparent: false,
             metalness: 0.0,
             roughness: 0.5
         });
 
-        const coreGeometry = new THREE.SphereGeometry(coreRadius, 32, 32);
+        const coreGeometry = new THREE.SphereGeometry(coreRadius, 64, 64);
         const coreMesh = new THREE.Mesh(coreGeometry, coreMaterial);
         coreMesh.userData.isCore = true;
+        coreMesh.userData.baseRotationSpeed = 0.5; // Base rotation speed
+        coreMesh.userData.currentRotationSpeed = 0.0; // Will be set by energy level
         group.add(coreMesh);
 
-        // Only add point light and glow halo for non-neutral spheres
+        // Point light for owned spheres only
+        const isNeutral = (color === CONFIG.NEUTRAL_COLOR);
         if (!isNeutral) {
             const pointLight = new THREE.PointLight(color, 1.5, 8);
             pointLight.position.set(0, 0, 0);
             group.add(pointLight);
-
-            // Add visible glow halo (flat circle visible from top-down)
-            const haloGeometry = new THREE.RingGeometry(radius * 1.1, radius * 1.6, 32);
-            const haloMaterial = new THREE.MeshBasicMaterial({
-                color: color,
-                transparent: true,
-                opacity: 0.3,
-                side: THREE.DoubleSide,
-                blending: THREE.AdditiveBlending
-            });
-            const haloMesh = new THREE.Mesh(haloGeometry, haloMaterial);
-            haloMesh.rotation.x = Math.PI / 2; // Lay flat (visible from top)
-            haloMesh.userData.isHalo = true;
-            group.add(haloMesh);
         }
+
+        // NO halo by default - halo is only added for selection
 
         // Add to scene
         this.scene.add(group);
@@ -220,39 +266,49 @@ export class SphereRenderer {
     }
 
     /**
-     * Add selection outline to sphere
+     * Add selection halo to sphere (replaces old outline system)
      * @param {THREE.Group} sphereGroup - Sphere to select
      */
     addSelectionOutline(sphereGroup) {
-        // Create outline geometry (slightly larger sphere, only edges visible)
-        const outlineGeometry = new THREE.SphereGeometry(
-            CONFIG.SPHERE_RADIUS * 1.15,
-            32,
-            32
-        );
+        // Remove existing selection halo if any
+        this.removeSelectionOutline(sphereGroup);
 
-        const outlineMaterial = new THREE.MeshBasicMaterial({
-            color: 0xFFFFFF,
+        const radius = CONFIG.SPHERE_RADIUS;
+
+        // Get sphere color for halo
+        let haloColor = 0xFFFFFF; // Default white
+        const shellMesh = sphereGroup.children.find(child => child.userData.isShell);
+        if (shellMesh && shellMesh.material) {
+            haloColor = shellMesh.material.color.getHex();
+        }
+
+        // Create selection halo (flat ring visible from top-down)
+        const haloGeometry = new THREE.RingGeometry(radius * 1.1, radius * 1.6, 32);
+        const haloMaterial = new THREE.MeshBasicMaterial({
+            color: haloColor,
             transparent: true,
-            opacity: 0.5,
-            side: THREE.BackSide // Render only back faces for outline effect
+            opacity: 0.5,  // Brighter than normal halos
+            side: THREE.DoubleSide,
+            blending: THREE.AdditiveBlending
         });
 
-        const outlineMesh = new THREE.Mesh(outlineGeometry, outlineMaterial);
-        outlineMesh.userData.isOutline = true;
-        sphereGroup.add(outlineMesh);
+        const haloMesh = new THREE.Mesh(haloGeometry, haloMaterial);
+        haloMesh.rotation.x = Math.PI / 2; // Lay flat (visible from top)
+        haloMesh.userData.isSelectionHalo = true;
+        haloMesh.userData.isPulsing = true; // Animate for selection visibility
+        sphereGroup.add(haloMesh);
     }
 
     /**
-     * Remove selection outline from sphere
+     * Remove selection halo from sphere
      * @param {THREE.Group} sphereGroup - Sphere to deselect
      */
     removeSelectionOutline(sphereGroup) {
-        const outline = sphereGroup.children.find(child => child.userData.isOutline);
-        if (outline) {
-            outline.geometry.dispose();
-            outline.material.dispose();
-            sphereGroup.remove(outline);
+        const halo = sphereGroup.children.find(child => child.userData.isSelectionHalo);
+        if (halo) {
+            halo.geometry.dispose();
+            halo.material.dispose();
+            sphereGroup.remove(halo);
         }
     }
 

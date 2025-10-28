@@ -160,69 +160,48 @@ export class SceneManager {
     }
 
     /**
-     * Update sphere animations (subtle pulsing)
+     * Update sphere animations based on energy level
+     * Rotation speed tied to energy: 0% = no rotation, 100% = full rotation
      * @param {number} deltaTime - Time since last frame
      */
     updateSphereAnimations(deltaTime) {
         const time = performance.now() * 0.001; // Convert to seconds
 
         this.sphereMeshes.forEach((sphereGroup, index) => {
-            let isOwnedSphere = false;
-
             sphereGroup.children.forEach(child => {
-                // Inner glowing core - pulse all cores (neutral pulses dimmer)
-                if (child.userData.isCore && child.material.emissive) {
-                    const pulseSpeed = 1.2 + index * 0.05;
+                // Inner cellular plasma core - rotation based on energy
+                if (child.userData.isCore) {
+                    const baseRotSpeed = child.userData.baseRotationSpeed || 0.5;
+                    const currentRotSpeed = child.userData.currentRotationSpeed || 0.0;
 
-                    // Get base intensity from material (2.0 for owned, 0.8 for neutral)
-                    const baseIntensity = child.material.emissiveIntensity;
+                    // Rotate core (energy determines speed)
+                    child.rotation.y += currentRotSpeed * deltaTime;
+                    child.rotation.x += currentRotSpeed * deltaTime * 0.6;
 
-                    // Check if this is owned (bright) or neutral (dim)
-                    const isOwned = baseIntensity > 1.0;
-                    isOwnedSphere = isOwned;
-
-                    if (isOwned) {
-                        // Owned spheres: dramatic pulse from dark to very bright
-                        const minIntensity = 0.3;
-                        const maxIntensity = 2.5;
-                        const intensity = minIntensity + (maxIntensity - minIntensity) *
-                                        (0.5 + 0.5 * Math.sin(time * pulseSpeed));
-                        child.material.emissiveIntensity = intensity;
-                    } else {
-                        // Neutral spheres: subtle pulse (dim grey glow)
-                        const minIntensity = 0.5;
-                        const maxIntensity = 1.0;
-                        const intensity = minIntensity + (maxIntensity - minIntensity) *
-                                        (0.5 + 0.5 * Math.sin(time * pulseSpeed));
-                        child.material.emissiveIntensity = intensity;
-                    }
-
-                    // Subtle size pulse for breathing effect
-                    const pulseAmount = 0.05; // 5% variation
-                    const scale = 1.0 + Math.sin(time * pulseSpeed) * pulseAmount;
-                    child.scale.setScalar(scale);
+                    // Subtle emissive pulsing for visual life
+                    const pulseSpeed = 1.2;
+                    const basePulse = child.material.emissiveIntensity;
+                    const pulseVariation = 0.3;
+                    child.material.emissiveIntensity = basePulse + Math.sin(time * pulseSpeed) * pulseVariation;
                 }
 
-                // Animate halo glow (breathing effect)
-                if (child.userData.isHalo) {
-                    const pulseSpeed = 1.2 + index * 0.05;
-                    const opacityBase = 0.3;
+                // Animate selection halo (pulsing effect)
+                if (child.userData.isSelectionHalo && child.userData.isPulsing) {
+                    const pulseSpeed = 2.0;
+                    const opacityBase = 0.5;
                     const opacityVariation = 0.2;
                     child.material.opacity = opacityBase + Math.sin(time * pulseSpeed) * opacityVariation;
                 }
 
                 // Pulse point light intensity
                 if (child.isLight) {
-                    const pulseSpeed = 1.2 + index * 0.05;
+                    const pulseSpeed = 1.2;
                     const minIntensity = 0.8;
                     const maxIntensity = 2.0;
                     child.intensity = minIntensity + (maxIntensity - minIntensity) *
                                     (0.5 + 0.5 * Math.sin(time * pulseSpeed));
                 }
             });
-
-            // Subtle rotation (very slow)
-            sphereGroup.rotation.z += deltaTime * 0.1;
         });
 
         // Animate connection streams
@@ -251,8 +230,30 @@ export class SceneManager {
 
                 // Update sphere visual
                 this.sphereRenderer.updateSphereColor(sphere.mesh, color, 1.0);
+
+                // Update rotation speed based on energy level
+                this.updateSphereRotation(sphere.mesh, sphere.energy);
             }
         });
+    }
+
+    /**
+     * Update sphere rotation speed based on energy level
+     * 0% energy = no rotation, 100% energy = full rotation
+     * @param {THREE.Group} sphereGroup - Sphere mesh group
+     * @param {number} energy - Energy level (0-100)
+     */
+    updateSphereRotation(sphereGroup, energy) {
+        const coreMesh = sphereGroup.children.find(child => child.userData.isCore);
+        if (!coreMesh) return;
+
+        const baseRotSpeed = coreMesh.userData.baseRotationSpeed || 0.5;
+
+        // Energy percentage (0.0 to 1.0)
+        const energyPercent = Math.max(0, Math.min(100, energy)) / 100;
+
+        // Rotation speed scales with energy
+        coreMesh.userData.currentRotationSpeed = baseRotSpeed * energyPercent;
     }
 
     /**
