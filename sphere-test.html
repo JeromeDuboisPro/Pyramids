@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pyramids - Sphere Rendering Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #000510;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        #header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 5, 16, 0.95);
+            padding: 20px;
+            z-index: 1000;
+            border-bottom: 2px solid #FF6B35;
+        }
+
+        #header h1 {
+            font-size: 24px;
+            color: #FF6B35;
+            margin-bottom: 10px;
+        }
+
+        #header p {
+            font-size: 14px;
+            color: #808080;
+            margin-bottom: 15px;
+        }
+
+        #selected-count {
+            color: #00D9FF;
+            font-weight: bold;
+        }
+
+        #controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            background: #FF6B35;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+        }
+
+        .btn:hover {
+            background: #ff8555;
+        }
+
+        .btn:disabled {
+            background: #404040;
+            cursor: not-allowed;
+        }
+
+        #grid-container {
+            margin-top: 150px;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            max-width: 1600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .sphere-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid transparent;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .sphere-card:hover {
+            border-color: #808080;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .sphere-card.selected {
+            border-color: #00D9FF;
+            background: rgba(0, 217, 255, 0.1);
+        }
+
+        .sphere-card canvas {
+            width: 100%;
+            height: 200px;
+            display: block;
+        }
+
+        .sphere-info {
+            padding: 10px;
+            text-align: center;
+        }
+
+        .sphere-id {
+            font-size: 20px;
+            font-weight: bold;
+            color: #FF6B35;
+            margin-bottom: 5px;
+        }
+
+        .sphere-name {
+            font-size: 14px;
+            color: white;
+            margin-bottom: 5px;
+        }
+
+        .sphere-tech {
+            font-size: 11px;
+            color: #808080;
+            line-height: 1.4;
+        }
+
+        .selection-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #00D9FF;
+            color: #000510;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .sphere-card.selected .selection-badge {
+            display: flex;
+        }
+
+        @media (max-width: 1200px) {
+            #grid-container {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 800px) {
+            #grid-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <h1>🎨 Sphere Rendering Test - Intel iGPU Compatibility</h1>
+        <p>Click on spheres to select your favorites. Selected: <span id="selected-count">0</span>/16</p>
+        <div id="controls">
+            <button class="btn" id="clear-btn">Clear Selection</button>
+            <button class="btn" id="show-selected-btn" disabled>Show Selected IDs</button>
+            <button class="btn" id="back-game-btn">← Back to Game</button>
+        </div>
+    </div>
+
+    <div id="grid-container"></div>
+
+    <script type="module">
+        import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
+
+        const designs = [
+            {
+                id: 'A1',
+                name: 'Current Design',
+                tech: 'Glass shell + glowing core (MeshStandard)',
+                create: createCurrentDesign
+            },
+            {
+                id: 'A2',
+                name: 'Solid Emissive',
+                tech: 'Single sphere, high emissive (MeshStandard)',
+                create: createSolidEmissive
+            },
+            {
+                id: 'A3',
+                name: 'Layered Glow',
+                tech: 'Core + 2 glow layers (additive blending)',
+                create: createLayeredGlow
+            },
+            {
+                id: 'A4',
+                name: 'Sprite Glow',
+                tech: 'Sphere + sprite-based halo',
+                create: createSpriteGlow
+            },
+            {
+                id: 'B1',
+                name: 'Point Light Focus',
+                tech: 'Dim sphere + strong point light',
+                create: createPointLightFocus
+            },
+            {
+                id: 'B2',
+                name: 'Particle Core',
+                tech: 'Sphere + particle system inside',
+                create: createParticleCore
+            },
+            {
+                id: 'B3',
+                name: 'Fresnel Rim',
+                tech: 'Shader-based rim lighting',
+                create: createFresnelRim
+            },
+            {
+                id: 'B4',
+                name: 'Double Shell',
+                tech: 'Two transparent layers, different opacities',
+                create: createDoubleShell
+            },
+            {
+                id: 'C1',
+                name: 'Basic Lit',
+                tech: 'MeshBasicMaterial + external lighting',
+                create: createBasicLit
+            },
+            {
+                id: 'C2',
+                name: 'Metallic Sphere',
+                tech: 'High metalness + roughness variation',
+                create: createMetallic
+            },
+            {
+                id: 'C3',
+                name: 'Flat + Shadow',
+                tech: 'Flat color + fake shadow circle',
+                create: createFlatShadow
+            },
+            {
+                id: 'C4',
+                name: 'Pulsing Scale',
+                tech: 'Simple sphere with size animation focus',
+                create: createPulsingScale
+            },
+            {
+                id: 'D1',
+                name: 'Ring Effect',
+                tech: 'Sphere + Saturn-like ring',
+                create: createRingEffect
+            },
+            {
+                id: 'D2',
+                name: 'Multi-Light',
+                tech: 'Multiple small point lights inside',
+                create: createMultiLight
+            },
+            {
+                id: 'D3',
+                name: 'Bloom Sim',
+                tech: 'Bright core + blur simulation',
+                create: createBloomSim
+            },
+            {
+                id: 'D4',
+                name: 'Gradient Texture',
+                tech: 'Radial gradient canvas texture',
+                create: createGradientTexture
+            }
+        ];
+
+        const selectedDesigns = new Set();
+        const scenes = [];
+
+        // Create grid
+        const gridContainer = document.getElementById('grid-container');
+
+        designs.forEach((design, index) => {
+            const card = document.createElement('div');
+            card.className = 'sphere-card';
+            card.dataset.id = design.id;
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 400;
+            canvas.height = 400;
+
+            const info = document.createElement('div');
+            info.className = 'sphere-info';
+            info.innerHTML = `
+                <div class="sphere-id">${design.id}</div>
+                <div class="sphere-name">${design.name}</div>
+                <div class="sphere-tech">${design.tech}</div>
+                <div class="selection-badge">✓</div>
+            `;
+
+            card.appendChild(canvas);
+            card.appendChild(info);
+            gridContainer.appendChild(card);
+
+            // Setup scene
+            const scene = setupScene(canvas, design);
+            scenes.push(scene);
+
+            // Click handler
+            card.addEventListener('click', () => {
+                if (selectedDesigns.has(design.id)) {
+                    selectedDesigns.delete(design.id);
+                    card.classList.remove('selected');
+                } else {
+                    selectedDesigns.add(design.id);
+                    card.classList.add('selected');
+                }
+                updateSelectedCount();
+            });
+        });
+
+        function setupScene(canvas, design) {
+            const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+            renderer.setSize(400, 400);
+            renderer.setClearColor(0x000510);
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.0;
+
+            const scene = new THREE.Scene();
+
+            const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
+            camera.position.set(0, 0, 3);
+            camera.lookAt(0, 0, 0);
+
+            // Ambient light
+            const ambient = new THREE.AmbientLight(0xffffff, 0.2);
+            scene.add(ambient);
+
+            // Create design
+            const group = design.create(scene);
+
+            return { renderer, scene, camera, group, time: 0 };
+        }
+
+        // Design implementations
+        function createCurrentDesign(scene) {
+            const group = new THREE.Group();
+            const color = 0xFF6B35;
+
+            // Shell
+            const shell = new THREE.Mesh(
+                new THREE.SphereGeometry(0.5, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    color: color,
+                    transparent: true,
+                    opacity: 0.4,
+                    metalness: 0.1,
+                    roughness: 0.2
+                })
+            );
+            group.add(shell);
+
+            // Core
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.3, 32, 32),
+                new THREE.MeshStandardMaterial({
+                    color: color,
+                    emissive: color,
+                    emissiveIntensity: 2.0
+                })
+            );
+            core.userData.isCore = true;
+            group.add(core);
+
+            // Point light
+            const light = new THREE.PointLight(color, 1.5, 5);
+            group.add(light);
+
+            scene.add(group);
+            return group;
+        }
+
+        function createSolidEmissive(scene) {
+            const group = new THREE.Group();
+            const sphere = new THREE.Mesh(
+                new THREE.SphereGeometry(0.5, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF6B35,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 1.5
+                })
+            );
+            sphere.userData.isCore = true;
+            group.add(sphere);
+            scene.add(group);
+            return group;
+        }
+
+        function createLayeredGlow(scene) {
+            const group = new THREE.Group();
+            const color = 0xFF6B35;
+
+            // Core
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.3, 32, 32),
+                new THREE.MeshStandardMaterial({
+                    color: color,
+                    emissive: color,
+                    emissiveIntensity: 1.0
+                })
+            );
+            group.add(core);
+
+            // Glow layer 1
+            const glow1 = new THREE.Mesh(
+                new THREE.SphereGeometry(0.4, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    color: color,
+                    transparent: true,
+                    opacity: 0.3,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            group.add(glow1);
+
+            // Glow layer 2
+            const glow2 = new THREE.Mesh(
+                new THREE.SphereGeometry(0.5, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    color: color,
+                    transparent: true,
+                    opacity: 0.15,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            group.add(glow2);
+
+            scene.add(group);
+            return group;
+        }
+
+        function createSpriteGlow(scene) {
+            const group = new THREE.Group();
+            const color = 0xFF6B35;
+
+            // Sphere
+            const sphere = new THREE.Mesh(
+                new THREE.SphereGeometry(0.3, 32, 32),
+                new THREE.MeshStandardMaterial({ color: color })
+            );
+            group.add(sphere);
+
+            // Sprite glow
+            const canvas = document.createElement('canvas');
+            canvas.width = canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            const gradient = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+            gradient.addColorStop(0, 'rgba(255, 107, 53, 0.8)');
+            gradient.addColorStop(1, 'rgba(255, 107, 53, 0)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 128, 128);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            const sprite = new THREE.Sprite(
+                new THREE.SpriteMaterial({
+                    map: texture,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            sprite.scale.set(1.5, 1.5, 1);
+            group.add(sprite);
+
+            scene.add(group);
+            return group;
+        }
+
+        function createPointLightFocus(scene) {
+            const group = new THREE.Group();
+            const sphere = new THREE.Mesh(
+                new THREE.SphereGeometry(0.5, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF6B35,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 0.3
+                })
+            );
+            group.add(sphere);
+
+            const light = new THREE.PointLight(0xFF6B35, 3.0, 5);
+            group.add(light);
+
+            scene.add(group);
+            return group;
+        }
+
+        function createParticleCore(scene) {
+            const group = new THREE.Group();
+
+            // Shell
+            const shell = new THREE.Mesh(
+                new THREE.SphereGeometry(0.5, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF6B35,
+                    transparent: true,
+                    opacity: 0.3
+                })
+            );
+            group.add(shell);
+
+            // Particles
+            const particleCount = 50;
+            const positions = new Float32Array(particleCount * 3);
+            for (let i = 0; i < particleCount; i++) {
+                positions[i * 3] = (Math.random() - 0.5) * 0.4;
+                positions[i * 3 + 1] = (Math.random() - 0.5) * 0.4;
+                positions[i * 3 + 2] = (Math.random() - 0.5) * 0.4;
+            }
+
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+            const particles = new THREE.Points(
+                geometry,
+                new THREE.PointsMaterial({
+                    color: 0xFF6B35,
+                    size: 0.05,
+                    transparent: true,
+                    opacity: 0.8,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            group.add(particles);
+
+            scene.add(group);
+            return group;
+        }
+
+        function createFresnelRim(scene) {
+            const group = new THREE.Group();
+            // Simplified - just bright edges effect with standard material
+            const sphere = new THREE.Mesh(
+                new THREE.SphereGeometry(0.5, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF6B35,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 0.5,
+                    metalness: 0.8,
+                    roughness: 0.2
+                })
+            );
+            group.add(sphere);
+
+            const light = new THREE.PointLight(0xffffff, 1.0, 5);
+            light.position.set(2, 2, 2);
+            scene.add(light);
+
+            scene.add(group);
+            return group;
+        }
+
+        function createDoubleShell(scene) {
+            const group = new THREE.Group();
+            const color = 0xFF6B35;
+
+            // Inner shell
+            const inner = new THREE.Mesh(
+                new THREE.SphereGeometry(0.35, 32, 32),
+                new THREE.MeshStandardMaterial({
+                    color: color,
+                    emissive: color,
+                    emissiveIntensity: 1.0,
+                    transparent: true,
+                    opacity: 0.8
+                })
+            );
+            group.add(inner);
+
+            // Outer shell
+            const outer = new THREE.Mesh(
+                new THREE.SphereGeometry(0.5, 32, 32),
+                new THREE.MeshStandardMaterial({
+                    color: color,
+                    transparent: true,
+                    opacity: 0.3,
+                    metalness: 0.1,
+                    roughness: 0.2
+                })
+            );
+            group.add(outer);
+
+            scene.add(group);
+            return group;
+        }
+
+        function createBasicLit(scene) {
+            const group = new THREE.Group();
+            const sphere = new THREE.Mesh(
+                new THREE.SphereGeometry(0.5, 64, 64),
+                new THREE.MeshBasicMaterial({
+                    color: 0xFF6B35
+                })
+            );
+            group.add(sphere);
+
+            const light = new THREE.DirectionalLight(0xffffff, 1.0);
+            light.position.set(1, 1, 1);
+            scene.add(light);
+
+            scene.add(group);
+            return group;
+        }
+
+        function createMetallic(scene) {
+            const group = new THREE.Group();
+            const sphere = new THREE.Mesh(
+                new THREE.SphereGeometry(0.5, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF6B35,
+                    metalness: 0.9,
+                    roughness: 0.1,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 0.3
+                })
+            );
+            group.add(sphere);
+            scene.add(group);
+            return group;
+        }
+
+        function createFlatShadow(scene) {
+            const group = new THREE.Group();
+
+            // Sphere
+            const sphere = new THREE.Mesh(
+                new THREE.SphereGeometry(0.5, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    color: 0xFF6B35
+                })
+            );
+            group.add(sphere);
+
+            // Shadow circle
+            const shadow = new THREE.Mesh(
+                new THREE.CircleGeometry(0.6, 32),
+                new THREE.MeshBasicMaterial({
+                    color: 0x000000,
+                    transparent: true,
+                    opacity: 0.3
+                })
+            );
+            shadow.rotation.x = -Math.PI / 2;
+            shadow.position.y = -0.7;
+            group.add(shadow);
+
+            scene.add(group);
+            return group;
+        }
+
+        function createPulsingScale(scene) {
+            const group = new THREE.Group();
+            const sphere = new THREE.Mesh(
+                new THREE.SphereGeometry(0.5, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF6B35,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 1.0
+                })
+            );
+            sphere.userData.isCore = true;
+            sphere.userData.pulseSpeed = 2.0; // Faster pulse
+            group.add(sphere);
+            scene.add(group);
+            return group;
+        }
+
+        function createRingEffect(scene) {
+            const group = new THREE.Group();
+            const color = 0xFF6B35;
+
+            // Sphere
+            const sphere = new THREE.Mesh(
+                new THREE.SphereGeometry(0.4, 32, 32),
+                new THREE.MeshStandardMaterial({
+                    color: color,
+                    emissive: color,
+                    emissiveIntensity: 1.0
+                })
+            );
+            group.add(sphere);
+
+            // Ring
+            const ring = new THREE.Mesh(
+                new THREE.RingGeometry(0.55, 0.75, 32),
+                new THREE.MeshBasicMaterial({
+                    color: color,
+                    transparent: true,
+                    opacity: 0.5,
+                    side: THREE.DoubleSide,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            ring.rotation.x = Math.PI / 4;
+            group.add(ring);
+
+            scene.add(group);
+            return group;
+        }
+
+        function createMultiLight(scene) {
+            const group = new THREE.Group();
+
+            // Sphere
+            const sphere = new THREE.Mesh(
+                new THREE.SphereGeometry(0.5, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF6B35,
+                    transparent: true,
+                    opacity: 0.6
+                })
+            );
+            group.add(sphere);
+
+            // Multiple small lights
+            for (let i = 0; i < 3; i++) {
+                const light = new THREE.PointLight(0xFF6B35, 0.8, 2);
+                const angle = (i / 3) * Math.PI * 2;
+                light.position.set(
+                    Math.cos(angle) * 0.2,
+                    Math.sin(angle) * 0.2,
+                    0
+                );
+                group.add(light);
+            }
+
+            scene.add(group);
+            return group;
+        }
+
+        function createBloomSim(scene) {
+            const group = new THREE.Group();
+            const color = 0xFF6B35;
+
+            // Bright core
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.25, 32, 32),
+                new THREE.MeshStandardMaterial({
+                    color: color,
+                    emissive: color,
+                    emissiveIntensity: 3.0
+                })
+            );
+            core.userData.isCore = true;
+            group.add(core);
+
+            // Blur layers
+            for (let i = 1; i <= 3; i++) {
+                const blur = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.25 + i * 0.15, 16, 16),
+                    new THREE.MeshBasicMaterial({
+                        color: color,
+                        transparent: true,
+                        opacity: 0.15 / i,
+                        blending: THREE.AdditiveBlending
+                    })
+                );
+                group.add(blur);
+            }
+
+            scene.add(group);
+            return group;
+        }
+
+        function createGradientTexture(scene) {
+            const group = new THREE.Group();
+
+            // Create gradient texture
+            const canvas = document.createElement('canvas');
+            canvas.width = canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+
+            const gradient = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
+            gradient.addColorStop(0, '#ffffff');
+            gradient.addColorStop(0.5, '#FF6B35');
+            gradient.addColorStop(1, '#ff3300');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 256, 256);
+
+            const texture = new THREE.CanvasTexture(canvas);
+
+            const sphere = new THREE.Mesh(
+                new THREE.SphereGeometry(0.5, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    map: texture,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 0.5
+                })
+            );
+            group.add(sphere);
+
+            scene.add(group);
+            return group;
+        }
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+
+            scenes.forEach(sceneData => {
+                sceneData.time += 0.016;
+                const time = sceneData.time;
+
+                // Animate cores
+                sceneData.group.traverse(child => {
+                    if (child.userData.isCore && child.material.emissive) {
+                        const speed = child.userData.pulseSpeed || 1.2;
+                        const min = 0.3;
+                        const max = 2.5;
+                        child.material.emissiveIntensity = min + (max - min) *
+                            (0.5 + 0.5 * Math.sin(time * speed));
+
+                        const scale = 1.0 + Math.sin(time * speed) * 0.05;
+                        child.scale.setScalar(scale);
+                    }
+                });
+
+                // Rotate
+                sceneData.group.rotation.y = time * 0.3;
+
+                sceneData.renderer.render(sceneData.scene, sceneData.camera);
+            });
+        }
+
+        animate();
+
+        // Controls
+        function updateSelectedCount() {
+            document.getElementById('selected-count').textContent = selectedDesigns.size;
+            document.getElementById('show-selected-btn').disabled = selectedDesigns.size === 0;
+        }
+
+        document.getElementById('clear-btn').addEventListener('click', () => {
+            selectedDesigns.clear();
+            document.querySelectorAll('.sphere-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            updateSelectedCount();
+        });
+
+        document.getElementById('show-selected-btn').addEventListener('click', () => {
+            const ids = Array.from(selectedDesigns).sort().join(', ');
+            alert(`Selected designs: ${ids}\n\nCopy this and share with me!`);
+        });
+
+        document.getElementById('back-game-btn').addEventListener('click', () => {
+            window.location.href = 'index.html';
+        });
+    </script>
+</body>
+</html>
