@@ -301,8 +301,8 @@ export class InputHandler {
      * @param {MouseEvent} event
      */
     onPointerMove(event) {
-        // Handle panning if middle button is held
-        if (this.isPanning) {
+        // Handle panning if middle button is held (check this first)
+        if (this.isPanning && event.buttons === 4) { // Middle button (buttons bitmask)
             const deltaX = event.clientX - this.previousPanPosition.x;
             const deltaY = event.clientY - this.previousPanPosition.y;
 
@@ -319,8 +319,8 @@ export class InputHandler {
             return; // Skip tooltip while panning
         }
 
-        // Handle 3D rotation around pivot point
-        if (this.isRotating) {
+        // Handle 3D rotation around pivot point (check right button)
+        if (this.isRotating && event.buttons === 2) { // Right button (buttons bitmask)
             const deltaX = event.clientX - this.previousRotatePosition.x;
             const deltaY = event.clientY - this.previousRotatePosition.y;
 
@@ -444,13 +444,17 @@ export class InputHandler {
      * @param {MouseEvent} event
      */
     onPointerUp(event) {
-        if (event.button === 1 || this.isPanning) {
+        // Middle button released
+        if (event.button === 1) {
             this.isPanning = false;
             this.canvas.style.cursor = 'default';
+            console.log('⏹️ Panning stopped');
         }
-        if (event.button === 2 || this.isRotating) {
+        // Right button released
+        if (event.button === 2) {
             this.isRotating = false;
             this.canvas.style.cursor = 'default';
+            console.log('⏹️ Rotation stopped');
         }
     }
 

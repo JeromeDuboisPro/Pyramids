@@ -178,9 +178,18 @@ export class SceneManager {
                     const speedMultiplier = child.userData.rotationSpeedMultiplier || 1.0;
                     const finalRotSpeed = currentRotSpeed * speedMultiplier;
 
+                    // Calculate actual rotation per frame
+                    const rotationThisFrame = finalRotSpeed * deltaTime;
+
+                    // DEBUG: Log actual rotation application
+                    const sphereId = sphereGroup.userData.sphereId;
+                    if (sphereId && sphereId.startsWith('sphere-') && rotationThisFrame > 0.0001) {
+                        console.log(`🌀 ${sphereId}: applying ${rotationThisFrame.toFixed(6)} rad/frame (speed=${finalRotSpeed.toFixed(4)}, dt=${deltaTime.toFixed(4)})`);
+                    }
+
                     // Rotate core (energy determines speed, boost multiplies it)
-                    child.rotation.y += finalRotSpeed * deltaTime;
-                    child.rotation.x += finalRotSpeed * deltaTime * 0.6;
+                    child.rotation.y += rotationThisFrame;
+                    child.rotation.x += rotationThisFrame * 0.6;
 
                     // Subtle emissive pulsing for visual life
                     const pulseSpeed = 1.2;
