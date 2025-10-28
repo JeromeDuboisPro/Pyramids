@@ -301,26 +301,8 @@ export class InputHandler {
      * @param {MouseEvent} event
      */
     onPointerMove(event) {
-        // Handle panning if middle button is held (check this first)
-        if (this.isPanning && event.buttons === 4) { // Middle button (buttons bitmask)
-            const deltaX = event.clientX - this.previousPanPosition.x;
-            const deltaY = event.clientY - this.previousPanPosition.y;
-
-            this.previousPanPosition = {
-                x: event.clientX,
-                y: event.clientY
-            };
-
-            // Pan camera (scale by zoom level and viewport size)
-            const panSpeed = 0.02 / this.zoomLevel;
-            this.camera.position.x -= deltaX * panSpeed;
-            this.camera.position.y += deltaY * panSpeed;
-
-            return; // Skip tooltip while panning
-        }
-
-        // Handle 3D rotation around pivot point (check right button)
-        if (this.isRotating && event.buttons === 2) { // Right button (buttons bitmask)
+        // Handle 3D rotation around pivot point (check RIGHT CLICK first)
+        if (this.isRotating) {
             const deltaX = event.clientX - this.previousRotatePosition.x;
             const deltaY = event.clientY - this.previousRotatePosition.y;
 
@@ -367,6 +349,24 @@ export class InputHandler {
             this.camera.updateProjectionMatrix();
 
             return; // Skip tooltip while rotating
+        }
+
+        // Handle panning if middle button is held
+        if (this.isPanning) {
+            const deltaX = event.clientX - this.previousPanPosition.x;
+            const deltaY = event.clientY - this.previousPanPosition.y;
+
+            this.previousPanPosition = {
+                x: event.clientX,
+                y: event.clientY
+            };
+
+            // Pan camera (scale by zoom level and viewport size)
+            const panSpeed = 0.02 / this.zoomLevel;
+            this.camera.position.x -= deltaX * panSpeed;
+            this.camera.position.y += deltaY * panSpeed;
+
+            return; // Skip tooltip while panning
         }
 
         // Get pointer position
