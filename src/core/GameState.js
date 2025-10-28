@@ -237,11 +237,19 @@ export class GameState {
             } else if (target.owner === 'neutral') {
                 // Capturing neutral: 0% → 100%
                 target.attackingOwner = source.owner; // Track who's attacking
+                const oldEnergy = target.energy;
                 target.energy += energyAmount;
+
+                // DEBUG: Log energy changes for neutral spheres
+                if (this.tick % 60 === 0) { // Log every 60 frames (~1 second)
+                    console.log(`⚡ ${target.id}: ${oldEnergy.toFixed(1)}% → ${target.energy.toFixed(1)}% (+${energyAmount.toFixed(3)}%/frame)`);
+                }
+
                 if (target.energy >= 100) {
                     target.energy = 100;
                     target.owner = source.owner; // Capture!
                     target.attackingOwner = null; // Capture complete
+                    console.log(`✅ ${target.id} captured by ${source.owner}!`);
 
                     if (source.owner === 'player') {
                         this.stats.spheresCaptured++;
