@@ -174,9 +174,13 @@ export class SceneManager {
                     const baseRotSpeed = child.userData.baseRotationSpeed || 0.5;
                     const currentRotSpeed = child.userData.currentRotationSpeed || 0.0;
 
-                    // Rotate core (energy determines speed)
-                    child.rotation.y += currentRotSpeed * deltaTime;
-                    child.rotation.x += currentRotSpeed * deltaTime * 0.6;
+                    // Check for impact boost multiplier (set by StreamRenderer)
+                    const speedMultiplier = child.userData.rotationSpeedMultiplier || 1.0;
+                    const finalRotSpeed = currentRotSpeed * speedMultiplier;
+
+                    // Rotate core (energy determines speed, boost multiplies it)
+                    child.rotation.y += finalRotSpeed * deltaTime;
+                    child.rotation.x += finalRotSpeed * deltaTime * 0.6;
 
                     // Subtle emissive pulsing for visual life
                     const pulseSpeed = 1.2;

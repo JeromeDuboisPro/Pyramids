@@ -182,9 +182,8 @@ export class StreamRenderer {
         const coreMesh = targetSphere.mesh.children.find(child => child.userData.isCore);
         if (!coreMesh) return;
 
-        // Boost rotation temporarily
-        const currentSpeed = coreMesh.userData.currentRotationSpeed || 0;
-        coreMesh.userData.rotationBoost = 2.0; // 2x boost
+        // Set rotation speed multiplier (read by SceneManager)
+        coreMesh.userData.rotationSpeedMultiplier = 2.0; // 2x boost
         coreMesh.userData.boostStartTime = performance.now();
         coreMesh.userData.boostDuration = 0.3; // 300ms boost
 
@@ -351,7 +350,7 @@ export class StreamRenderer {
     }
 
     /**
-     * Animate sphere impact effects (vibration and rotation boost)
+     * Animate sphere impact effects (vibration and rotation boost timer)
      * @param {number} deltaTime - Time since last frame
      */
     animateSphereImpacts(deltaTime) {
@@ -363,21 +362,16 @@ export class StreamRenderer {
 
             const now = performance.now();
 
-            // Rotation boost effect
-            if (coreMesh.userData.rotationBoost) {
+            // Rotation boost timer (multiplier read by SceneManager)
+            if (coreMesh.userData.rotationSpeedMultiplier) {
                 const elapsed = (now - coreMesh.userData.boostStartTime) / 1000;
-                if (elapsed < coreMesh.userData.boostDuration) {
-                    // Apply rotation boost
-                    const baseSpeed = coreMesh.userData.currentRotationSpeed || 0;
-                    const boost = coreMesh.userData.rotationBoost;
-                    coreMesh.rotation.y += baseSpeed * boost * deltaTime;
-                    coreMesh.rotation.x += baseSpeed * boost * deltaTime * 0.6;
-                } else {
-                    // Boost expired
-                    delete coreMesh.userData.rotationBoost;
+                if (elapsed >= coreMesh.userData.boostDuration) {
+                    // Boost expired - remove multiplier
+                    delete coreMesh.userData.rotationSpeedMultiplier;
                     delete coreMesh.userData.boostStartTime;
                     delete coreMesh.userData.boostDuration;
                 }
+                // Note: No rotation applied here - SceneManager handles it
             }
 
             // Impact vibration effect
