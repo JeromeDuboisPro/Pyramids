@@ -288,6 +288,35 @@
                     { id: 'X5', name: 'Hybrid Ultimate', tech: 'All techniques combined, polished', create: createHybridUltimate },
                     { id: 'FINAL', name: 'The One', tech: 'Perfect synthesis of all learnings', create: createTheOne }
                 ]
+            },
+            // SET 5: Plasma Mastery - 16 variations of A5-5
+            {
+                name: "Plasma Mastery (A5-5 exploration)",
+                designs: [
+                    // Color Palette Variations
+                    { id: 'P1', name: 'Classic Plasma', tech: 'Original A5-5 plasma pattern', create: createClassicPlasma },
+                    { id: 'P2', name: 'Fire Plasma', tech: 'Red→orange→yellow heat waves', create: createFirePlasma },
+                    { id: 'P3', name: 'Cool Plasma', tech: 'Blue→cyan→white ice patterns', create: createCoolPlasma },
+                    { id: 'P4', name: 'Toxic Plasma', tech: 'Green→lime→yellow bio-glow', create: createToxicPlasma },
+
+                    // Pattern Algorithm Variations
+                    { id: 'P5', name: 'Turbulent Plasma', tech: 'Chaotic multi-wave interference', create: createTurbulentPlasma },
+                    { id: 'P6', name: 'Ripple Plasma', tech: 'Concentric ripple patterns', create: createRipplePlasma },
+                    { id: 'P7', name: 'Spiral Plasma', tech: 'Angle-based spiral patterns', create: createSpiralPlasma },
+                    { id: 'P8', name: 'Cellular Plasma', tech: 'Voronoi-like cell patterns', create: createCellularPlasma },
+
+                    // Animation Variations
+                    { id: 'P9', name: 'Flowing Plasma', tech: 'Time-animated flowing energy', create: createFlowingPlasma },
+                    { id: 'P10', name: 'Breathing Plasma', tech: 'Pulsing opacity and scale', create: createBreathingPlasma },
+                    { id: 'P11', name: 'Spinning Plasma', tech: 'Rotating plasma texture', create: createSpinningPlasma },
+                    { id: 'P12', name: 'Morphing Plasma', tech: 'Time-evolving pattern changes', create: createMorphingPlasma },
+
+                    // Hybrid Variations
+                    { id: 'P13', name: 'Plasma + Particles', tech: 'Plasma halo + particle shell', create: createPlasmaParticles },
+                    { id: 'P14', name: 'Plasma + Ring', tech: 'Plasma halo + rotating ring', create: createPlasmaRing },
+                    { id: 'P15', name: 'Dual Plasma', tech: 'Two plasma layers, different patterns', create: createDualPlasma },
+                    { id: 'P16', name: 'Plasma Core', tech: 'Plasma texture on core + outer halo', create: createPlasmaCore }
+                ]
             }
         ];
 
@@ -2384,6 +2413,894 @@
             return group;
         }
 
+        // ======== SET 5: PLASMA MASTERY FUNCTIONS ========
+
+        // P1: Classic Plasma (original A5-5)
+        function createClassicPlasma(scene) {
+            const group = new THREE.Group();
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.35, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF6B35,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 3.0
+                })
+            );
+            core.userData.isCore = true;
+            group.add(core);
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            for (let x = 0; x < 256; x++) {
+                for (let y = 0; y < 256; y++) {
+                    const dx = x - 128;
+                    const dy = y - 128;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const angle = Math.atan2(dy, dx);
+                    const value = Math.sin(dist * 0.05 + angle * 3);
+                    const alpha = Math.max(0, (1 - dist / 128) * 0.6);
+                    const r = 255;
+                    const g = Math.floor(107 + value * 100);
+                    const b = Math.floor(53 + value * 50);
+                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                    ctx.fillRect(x, y, 1, 1);
+                }
+            }
+            const texture = new THREE.CanvasTexture(canvas);
+            const halo = new THREE.Mesh(
+                new THREE.SphereGeometry(0.7, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    map: texture,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            group.add(halo);
+            scene.add(group);
+            return group;
+        }
+
+        // P2: Fire Plasma (red→orange→yellow)
+        function createFirePlasma(scene) {
+            const group = new THREE.Group();
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.35, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF3300,
+                    emissive: 0xFF3300,
+                    emissiveIntensity: 3.2
+                })
+            );
+            core.userData.isCore = true;
+            group.add(core);
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            for (let x = 0; x < 256; x++) {
+                for (let y = 0; y < 256; y++) {
+                    const dx = x - 128;
+                    const dy = y - 128;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const angle = Math.atan2(dy, dx);
+                    const value = Math.sin(dist * 0.05 + angle * 3);
+                    const alpha = Math.max(0, (1 - dist / 128) * 0.65);
+                    const r = 255;
+                    const g = Math.floor(51 + value * 150); // 51-200 range (orange-yellow)
+                    const b = Math.floor(value * 50); // 0-50 range
+                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                    ctx.fillRect(x, y, 1, 1);
+                }
+            }
+            const texture = new THREE.CanvasTexture(canvas);
+            const halo = new THREE.Mesh(
+                new THREE.SphereGeometry(0.7, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    map: texture,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            group.add(halo);
+            scene.add(group);
+            return group;
+        }
+
+        // P3: Cool Plasma (blue→cyan→white)
+        function createCoolPlasma(scene) {
+            const group = new THREE.Group();
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.35, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    color: 0x00D9FF,
+                    emissive: 0x00D9FF,
+                    emissiveIntensity: 3.0
+                })
+            );
+            core.userData.isCore = true;
+            group.add(core);
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            for (let x = 0; x < 256; x++) {
+                for (let y = 0; y < 256; y++) {
+                    const dx = x - 128;
+                    const dy = y - 128;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const angle = Math.atan2(dy, dx);
+                    const value = Math.sin(dist * 0.05 + angle * 3);
+                    const alpha = Math.max(0, (1 - dist / 128) * 0.6);
+                    const r = Math.floor(value * 100 + 100); // 100-200
+                    const g = Math.floor(217 + value * 38); // 217-255
+                    const b = 255;
+                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                    ctx.fillRect(x, y, 1, 1);
+                }
+            }
+            const texture = new THREE.CanvasTexture(canvas);
+            const halo = new THREE.Mesh(
+                new THREE.SphereGeometry(0.7, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    map: texture,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            group.add(halo);
+            scene.add(group);
+            return group;
+        }
+
+        // P4: Toxic Plasma (green→lime→yellow)
+        function createToxicPlasma(scene) {
+            const group = new THREE.Group();
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.35, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    color: 0x00FF00,
+                    emissive: 0x00FF00,
+                    emissiveIntensity: 3.0
+                })
+            );
+            core.userData.isCore = true;
+            group.add(core);
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            for (let x = 0; x < 256; x++) {
+                for (let y = 0; y < 256; y++) {
+                    const dx = x - 128;
+                    const dy = y - 128;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const angle = Math.atan2(dy, dx);
+                    const value = Math.sin(dist * 0.05 + angle * 3);
+                    const alpha = Math.max(0, (1 - dist / 128) * 0.6);
+                    const r = Math.floor(value * 100 + 100); // 100-200
+                    const g = 255;
+                    const b = Math.floor(value * 50); // 0-50
+                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                    ctx.fillRect(x, y, 1, 1);
+                }
+            }
+            const texture = new THREE.CanvasTexture(canvas);
+            const halo = new THREE.Mesh(
+                new THREE.SphereGeometry(0.7, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    map: texture,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            group.add(halo);
+            scene.add(group);
+            return group;
+        }
+
+        // P5: Turbulent Plasma (chaotic multi-wave)
+        function createTurbulentPlasma(scene) {
+            const group = new THREE.Group();
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.35, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF6B35,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 3.0
+                })
+            );
+            core.userData.isCore = true;
+            group.add(core);
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            for (let x = 0; x < 256; x++) {
+                for (let y = 0; y < 256; y++) {
+                    const dx = x - 128;
+                    const dy = y - 128;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const angle = Math.atan2(dy, dx);
+                    // Multiple interfering waves
+                    const value = (Math.sin(dist * 0.08 + angle * 2) +
+                                   Math.sin(dist * 0.03 - angle * 4) +
+                                   Math.cos(dist * 0.05 + angle * 3)) / 3;
+                    const alpha = Math.max(0, (1 - dist / 128) * 0.7);
+                    const r = 255;
+                    const g = Math.floor(107 + value * 120);
+                    const b = Math.floor(53 + value * 80);
+                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                    ctx.fillRect(x, y, 1, 1);
+                }
+            }
+            const texture = new THREE.CanvasTexture(canvas);
+            const halo = new THREE.Mesh(
+                new THREE.SphereGeometry(0.7, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    map: texture,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            group.add(halo);
+            scene.add(group);
+            return group;
+        }
+
+        // P6: Ripple Plasma (concentric circles)
+        function createRipplePlasma(scene) {
+            const group = new THREE.Group();
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.35, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF6B35,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 3.0
+                })
+            );
+            core.userData.isCore = true;
+            group.add(core);
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            for (let x = 0; x < 256; x++) {
+                for (let y = 0; y < 256; y++) {
+                    const dx = x - 128;
+                    const dy = y - 128;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    // Pure ripple effect (distance-only)
+                    const value = Math.sin(dist * 0.15);
+                    const alpha = Math.max(0, (1 - dist / 128) * 0.6);
+                    const r = 255;
+                    const g = Math.floor(107 + value * 100);
+                    const b = Math.floor(53 + value * 50);
+                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                    ctx.fillRect(x, y, 1, 1);
+                }
+            }
+            const texture = new THREE.CanvasTexture(canvas);
+            const halo = new THREE.Mesh(
+                new THREE.SphereGeometry(0.7, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    map: texture,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            group.add(halo);
+            scene.add(group);
+            return group;
+        }
+
+        // P7: Spiral Plasma (angle-based)
+        function createSpiralPlasma(scene) {
+            const group = new THREE.Group();
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.35, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF6B35,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 3.0
+                })
+            );
+            core.userData.isCore = true;
+            group.add(core);
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            for (let x = 0; x < 256; x++) {
+                for (let y = 0; y < 256; y++) {
+                    const dx = x - 128;
+                    const dy = y - 128;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const angle = Math.atan2(dy, dx);
+                    // Spiral pattern (angle + distance interaction)
+                    const value = Math.sin(angle * 5 + dist * 0.1);
+                    const alpha = Math.max(0, (1 - dist / 128) * 0.6);
+                    const r = 255;
+                    const g = Math.floor(107 + value * 100);
+                    const b = Math.floor(53 + value * 50);
+                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                    ctx.fillRect(x, y, 1, 1);
+                }
+            }
+            const texture = new THREE.CanvasTexture(canvas);
+            const halo = new THREE.Mesh(
+                new THREE.SphereGeometry(0.7, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    map: texture,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            group.add(halo);
+            scene.add(group);
+            return group;
+        }
+
+        // P8: Cellular Plasma (voronoi-like cells)
+        function createCellularPlasma(scene) {
+            const group = new THREE.Group();
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.35, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF6B35,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 3.0
+                })
+            );
+            core.userData.isCore = true;
+            group.add(core);
+
+            // Generate random cell centers
+            const cellCenters = [];
+            for (let i = 0; i < 12; i++) {
+                cellCenters.push({
+                    x: Math.random() * 256,
+                    y: Math.random() * 256
+                });
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            for (let x = 0; x < 256; x++) {
+                for (let y = 0; y < 256; y++) {
+                    const dx = x - 128;
+                    const dy = y - 128;
+                    const centerDist = Math.sqrt(dx * dx + dy * dy);
+
+                    // Find nearest cell center
+                    let minDist = Infinity;
+                    for (const center of cellCenters) {
+                        const cdx = x - center.x;
+                        const cdy = y - center.y;
+                        const dist = Math.sqrt(cdx * cdx + cdy * cdy);
+                        minDist = Math.min(minDist, dist);
+                    }
+
+                    const value = Math.sin(minDist * 0.1);
+                    const alpha = Math.max(0, (1 - centerDist / 128) * 0.6);
+                    const r = 255;
+                    const g = Math.floor(107 + value * 100);
+                    const b = Math.floor(53 + value * 50);
+                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                    ctx.fillRect(x, y, 1, 1);
+                }
+            }
+            const texture = new THREE.CanvasTexture(canvas);
+            const halo = new THREE.Mesh(
+                new THREE.SphereGeometry(0.7, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    map: texture,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            group.add(halo);
+            scene.add(group);
+            return group;
+        }
+
+        // P9: Flowing Plasma (time-animated)
+        function createFlowingPlasma(scene) {
+            const group = new THREE.Group();
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.35, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF6B35,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 3.0
+                })
+            );
+            core.userData.isCore = true;
+            group.add(core);
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            for (let x = 0; x < 256; x++) {
+                for (let y = 0; y < 256; y++) {
+                    const dx = x - 128;
+                    const dy = y - 128;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const angle = Math.atan2(dy, dx);
+                    const value = Math.sin(dist * 0.05 + angle * 3);
+                    const alpha = Math.max(0, (1 - dist / 128) * 0.6);
+                    const r = 255;
+                    const g = Math.floor(107 + value * 100);
+                    const b = Math.floor(53 + value * 50);
+                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                    ctx.fillRect(x, y, 1, 1);
+                }
+            }
+            const texture = new THREE.CanvasTexture(canvas);
+            const halo = new THREE.Mesh(
+                new THREE.SphereGeometry(0.7, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    map: texture,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            halo.userData.flowingPlasma = true; // Animation flag
+            group.add(halo);
+            scene.add(group);
+            return group;
+        }
+
+        // P10: Breathing Plasma (pulsing)
+        function createBreathingPlasma(scene) {
+            const group = new THREE.Group();
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.35, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF6B35,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 3.0
+                })
+            );
+            core.userData.isCore = true;
+            core.userData.pulseDramatic = true;
+            group.add(core);
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            for (let x = 0; x < 256; x++) {
+                for (let y = 0; y < 256; y++) {
+                    const dx = x - 128;
+                    const dy = y - 128;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const angle = Math.atan2(dy, dx);
+                    const value = Math.sin(dist * 0.05 + angle * 3);
+                    const alpha = Math.max(0, (1 - dist / 128) * 0.6);
+                    const r = 255;
+                    const g = Math.floor(107 + value * 100);
+                    const b = Math.floor(53 + value * 50);
+                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                    ctx.fillRect(x, y, 1, 1);
+                }
+            }
+            const texture = new THREE.CanvasTexture(canvas);
+            const halo = new THREE.Mesh(
+                new THREE.SphereGeometry(0.7, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    map: texture,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            halo.userData.isPulsing = true;
+            halo.userData.largeScale = true;
+            group.add(halo);
+            scene.add(group);
+            return group;
+        }
+
+        // P11: Spinning Plasma (rotating)
+        function createSpinningPlasma(scene) {
+            const group = new THREE.Group();
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.35, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF6B35,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 3.0
+                })
+            );
+            core.userData.isCore = true;
+            group.add(core);
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            for (let x = 0; x < 256; x++) {
+                for (let y = 0; y < 256; y++) {
+                    const dx = x - 128;
+                    const dy = y - 128;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const angle = Math.atan2(dy, dx);
+                    const value = Math.sin(dist * 0.05 + angle * 3);
+                    const alpha = Math.max(0, (1 - dist / 128) * 0.6);
+                    const r = 255;
+                    const g = Math.floor(107 + value * 100);
+                    const b = Math.floor(53 + value * 50);
+                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                    ctx.fillRect(x, y, 1, 1);
+                }
+            }
+            const texture = new THREE.CanvasTexture(canvas);
+            const halo = new THREE.Mesh(
+                new THREE.SphereGeometry(0.7, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    map: texture,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            halo.userData.rotatingHalo = true;
+            group.add(halo);
+            scene.add(group);
+            return group;
+        }
+
+        // P12: Morphing Plasma (time-evolving)
+        function createMorphingPlasma(scene) {
+            const group = new THREE.Group();
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.35, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF6B35,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 3.0
+                })
+            );
+            core.userData.isCore = true;
+            group.add(core);
+
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            for (let x = 0; x < 256; x++) {
+                for (let y = 0; y < 256; y++) {
+                    const dx = x - 128;
+                    const dy = y - 128;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const angle = Math.atan2(dy, dx);
+                    const value = Math.sin(dist * 0.05 + angle * 3);
+                    const alpha = Math.max(0, (1 - dist / 128) * 0.6);
+                    const r = 255;
+                    const g = Math.floor(107 + value * 100);
+                    const b = Math.floor(53 + value * 50);
+                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                    ctx.fillRect(x, y, 1, 1);
+                }
+            }
+            const texture = new THREE.CanvasTexture(canvas);
+            const halo = new THREE.Mesh(
+                new THREE.SphereGeometry(0.7, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    map: texture,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            halo.userData.morphingPlasma = true; // Animation flag
+            group.add(halo);
+            scene.add(group);
+            return group;
+        }
+
+        // P13: Plasma + Particles
+        function createPlasmaParticles(scene) {
+            const group = new THREE.Group();
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.3, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF6B35,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 3.0
+                })
+            );
+            core.userData.isCore = true;
+            group.add(core);
+
+            // Plasma halo
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            for (let x = 0; x < 256; x++) {
+                for (let y = 0; y < 256; y++) {
+                    const dx = x - 128;
+                    const dy = y - 128;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const angle = Math.atan2(dy, dx);
+                    const value = Math.sin(dist * 0.05 + angle * 3);
+                    const alpha = Math.max(0, (1 - dist / 128) * 0.5);
+                    const r = 255;
+                    const g = Math.floor(107 + value * 100);
+                    const b = Math.floor(53 + value * 50);
+                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                    ctx.fillRect(x, y, 1, 1);
+                }
+            }
+            const texture = new THREE.CanvasTexture(canvas);
+            const halo = new THREE.Mesh(
+                new THREE.SphereGeometry(0.7, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    map: texture,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            group.add(halo);
+
+            // Particle shell
+            const particleCount = 100;
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(particleCount * 3);
+            for (let i = 0; i < particleCount; i++) {
+                const phi = Math.acos(2 * Math.random() - 1);
+                const theta = Math.random() * Math.PI * 2;
+                const radius = 0.5;
+                positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+                positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+                positions[i * 3 + 2] = radius * Math.cos(phi);
+            }
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            const material = new THREE.PointsMaterial({
+                color: 0xFF6B35,
+                size: 0.04,
+                transparent: true,
+                opacity: 0.7,
+                blending: THREE.AdditiveBlending
+            });
+            const particles = new THREE.Points(geometry, material);
+            particles.userData.isParticles = true;
+            particles.userData.rotating = true;
+            group.add(particles);
+
+            scene.add(group);
+            return group;
+        }
+
+        // P14: Plasma + Ring
+        function createPlasmaRing(scene) {
+            const group = new THREE.Group();
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.35, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF6B35,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 3.0
+                })
+            );
+            core.userData.isCore = true;
+            group.add(core);
+
+            // Plasma halo
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            for (let x = 0; x < 256; x++) {
+                for (let y = 0; y < 256; y++) {
+                    const dx = x - 128;
+                    const dy = y - 128;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const angle = Math.atan2(dy, dx);
+                    const value = Math.sin(dist * 0.05 + angle * 3);
+                    const alpha = Math.max(0, (1 - dist / 128) * 0.6);
+                    const r = 255;
+                    const g = Math.floor(107 + value * 100);
+                    const b = Math.floor(53 + value * 50);
+                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                    ctx.fillRect(x, y, 1, 1);
+                }
+            }
+            const texture = new THREE.CanvasTexture(canvas);
+            const halo = new THREE.Mesh(
+                new THREE.SphereGeometry(0.65, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    map: texture,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            group.add(halo);
+
+            // Rotating ring
+            const ring = new THREE.Mesh(
+                new THREE.RingGeometry(0.55, 0.75, 32),
+                new THREE.MeshBasicMaterial({
+                    color: 0xFF6B35,
+                    transparent: true,
+                    opacity: 0.4,
+                    side: THREE.DoubleSide,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            ring.rotation.x = Math.PI / 2;
+            ring.userData.isRing = true;
+            group.add(ring);
+
+            scene.add(group);
+            return group;
+        }
+
+        // P15: Dual Plasma (two layers)
+        function createDualPlasma(scene) {
+            const group = new THREE.Group();
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.3, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    color: 0xFF6B35,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 3.5
+                })
+            );
+            core.userData.isCore = true;
+            group.add(core);
+
+            // Inner plasma layer
+            const canvas1 = document.createElement('canvas');
+            canvas1.width = 256;
+            canvas1.height = 256;
+            const ctx1 = canvas1.getContext('2d');
+            for (let x = 0; x < 256; x++) {
+                for (let y = 0; y < 256; y++) {
+                    const dx = x - 128;
+                    const dy = y - 128;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const angle = Math.atan2(dy, dx);
+                    const value = Math.sin(dist * 0.05 + angle * 3);
+                    const alpha = Math.max(0, (1 - dist / 128) * 0.5);
+                    const r = 255;
+                    const g = Math.floor(107 + value * 100);
+                    const b = Math.floor(53 + value * 50);
+                    ctx1.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                    ctx1.fillRect(x, y, 1, 1);
+                }
+            }
+            const texture1 = new THREE.CanvasTexture(canvas1);
+            const halo1 = new THREE.Mesh(
+                new THREE.SphereGeometry(0.5, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    map: texture1,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            halo1.userData.rotatingHalo = true;
+            group.add(halo1);
+
+            // Outer plasma layer (different pattern)
+            const canvas2 = document.createElement('canvas');
+            canvas2.width = 256;
+            canvas2.height = 256;
+            const ctx2 = canvas2.getContext('2d');
+            for (let x = 0; x < 256; x++) {
+                for (let y = 0; y < 256; y++) {
+                    const dx = x - 128;
+                    const dy = y - 128;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const angle = Math.atan2(dy, dx);
+                    // Different pattern: spiral
+                    const value = Math.sin(angle * 5 + dist * 0.1);
+                    const alpha = Math.max(0, (1 - dist / 128) * 0.4);
+                    const r = 255;
+                    const g = Math.floor(107 + value * 100);
+                    const b = Math.floor(53 + value * 50);
+                    ctx2.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                    ctx2.fillRect(x, y, 1, 1);
+                }
+            }
+            const texture2 = new THREE.CanvasTexture(canvas2);
+            const halo2 = new THREE.Mesh(
+                new THREE.SphereGeometry(0.75, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    map: texture2,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            halo2.userData.rotatingHalo = true;
+            halo2.userData.reverseRotation = true;
+            group.add(halo2);
+
+            scene.add(group);
+            return group;
+        }
+
+        // P16: Plasma Core (plasma on core itself)
+        function createPlasmaCore(scene) {
+            const group = new THREE.Group();
+
+            // Plasma-textured core
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            for (let x = 0; x < 256; x++) {
+                for (let y = 0; y < 256; y++) {
+                    const dx = x - 128;
+                    const dy = y - 128;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const angle = Math.atan2(dy, dx);
+                    const value = Math.sin(dist * 0.08 + angle * 4);
+                    const r = 255;
+                    const g = Math.floor(107 + value * 100);
+                    const b = Math.floor(53 + value * 50);
+                    ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+                    ctx.fillRect(x, y, 1, 1);
+                }
+            }
+            const coreTexture = new THREE.CanvasTexture(canvas);
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.4, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    map: coreTexture,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 2.5,
+                    emissiveMap: coreTexture
+                })
+            );
+            core.userData.isCore = true;
+            core.userData.rotatingCore = true;
+            group.add(core);
+
+            // Outer plasma halo
+            const canvas2 = document.createElement('canvas');
+            canvas2.width = 256;
+            canvas2.height = 256;
+            const ctx2 = canvas2.getContext('2d');
+            for (let x = 0; x < 256; x++) {
+                for (let y = 0; y < 256; y++) {
+                    const dx = x - 128;
+                    const dy = y - 128;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const angle = Math.atan2(dy, dx);
+                    const value = Math.sin(dist * 0.05 + angle * 3);
+                    const alpha = Math.max(0, (1 - dist / 128) * 0.5);
+                    const r = 255;
+                    const g = Math.floor(107 + value * 100);
+                    const b = Math.floor(53 + value * 50);
+                    ctx2.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                    ctx2.fillRect(x, y, 1, 1);
+                }
+            }
+            const texture2 = new THREE.CanvasTexture(canvas2);
+            const halo = new THREE.Mesh(
+                new THREE.SphereGeometry(0.7, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    map: texture2,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            group.add(halo);
+
+            scene.add(group);
+            return group;
+        }
+
         function setupScene(canvas) {
             const scene = new THREE.Scene();
             const camera = new THREE.PerspectiveCamera(50, canvas.width / canvas.height, 0.1, 100);
@@ -2497,6 +3414,38 @@
                         const intensity = 1.5 + Math.sin(time * 1.2) * 0.8;
                         child.material.emissiveIntensity = intensity;
                     }
+                }
+
+                // Set 5: Plasma effects animations
+                if (child.userData.rotatingHalo) {
+                    if (child.userData.reverseRotation) {
+                        child.rotation.z = -time * 0.3;
+                    } else {
+                        child.rotation.z = time * 0.3;
+                    }
+                }
+
+                if (child.userData.fastPulse && child.userData.isPulsing) {
+                    const scale = 1.0 + Math.sin(time * 2.0) * 0.25;
+                    child.scale.setScalar(scale);
+                }
+
+                if (child.userData.flowingPlasma) {
+                    // Animate texture offset for flowing effect
+                    child.rotation.y = time * 0.15;
+                }
+
+                if (child.userData.morphingPlasma) {
+                    // Morph between patterns by rotating and scaling
+                    child.rotation.x = Math.sin(time * 0.3) * 0.2;
+                    child.rotation.y = time * 0.2;
+                    const morphScale = 1.0 + Math.sin(time * 0.4) * 0.1;
+                    child.scale.setScalar(morphScale);
+                }
+
+                if (child.userData.rotatingCore) {
+                    child.rotation.y = time * 0.5;
+                    child.rotation.x = time * 0.3;
                 }
             });
 
