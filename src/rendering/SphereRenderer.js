@@ -14,15 +14,23 @@ import { CONFIG } from '../main.js';
 export class SphereRenderer {
     constructor(scene) {
         this.scene = scene;
+        // Cache cellular textures by color to avoid expensive regeneration
+        this.textureCache = new Map(); // color (hex) -> THREE.CanvasTexture
     }
 
     /**
      * Generate cellular plasma texture (S12 pattern from sphere-test.html)
+     * Uses cache to avoid expensive regeneration
      * @param {number} color - Hex color for the plasma
      * @param {number} cellCount - Number of cell centers (default 12)
      * @returns {THREE.CanvasTexture}
      */
     createCellularPlasmaTexture(color, cellCount = 12) {
+        // Check cache first
+        if (this.textureCache.has(color)) {
+            return this.textureCache.get(color);
+        }
+
         // Generate random cell centers
         const cellCenters = [];
         for (let i = 0; i < cellCount; i++) {
@@ -67,7 +75,12 @@ export class SphereRenderer {
             }
         }
 
-        return new THREE.CanvasTexture(canvas);
+        const texture = new THREE.CanvasTexture(canvas);
+
+        // Cache for reuse
+        this.textureCache.set(color, texture);
+
+        return texture;
     }
 
     /**
@@ -81,6 +94,7 @@ export class SphereRenderer {
         const group = new THREE.Group();
         group.position.copy(position);
         group.userData.sphereId = id;
+        group.userData.currentColor = color; // Track color for update optimization
 
         const radius = CONFIG.SPHERE_RADIUS;
 
@@ -145,6 +159,10 @@ export class SphereRenderer {
      * @param {number} intensity - Unused (kept for compatibility)
      */
     updateSphereColor(sphereGroup, newColor, intensity = 1.0) {
+        // Skip update if color hasn't actually changed (performance optimization)
+        const currentColor = sphereGroup.userData.currentColor;
+        const colorChanged = currentColor !== newColor;
+
         // Check if this is a fully owned sphere (not neutral, not interpolated capture color)
         const isPlayerOwned = (newColor === CONFIG.PLAYER_COLOR);
         const isEnemyOwned = (newColor === CONFIG.ENEMY_COLOR);
@@ -168,23 +186,21 @@ export class SphereRenderer {
 
                 // Update inner glowing core
                 if (child.userData.isCore) {
-                    // Regenerate cellular texture with new color for consistency
-                    const newTexture = this.createCellularPlasmaTexture(newColor);
+                    // Only regenerate texture if color actually changed
+                    if (colorChanged) {
+                        const newTexture = this.createCellularPlasmaTexture(newColor);
 
-                    // Dispose old textures
-                    if (child.material.map) child.material.map.dispose();
-                    if (child.material.emissiveMap && child.material.emissiveMap !== child.material.map) {
-                        child.material.emissiveMap.dispose();
+                        // Note: Don't dispose cached textures, they're shared!
+                        // Just update references
+                        child.material.map = newTexture;
+                        child.material.emissiveMap = newTexture;
+                        child.material.needsUpdate = true;
                     }
 
-                    // Update material with new texture
-                    child.material.map = newTexture;
-                    child.material.emissiveMap = newTexture;
+                    // Always update color and intensity (cheap operations)
                     child.material.color.setHex(newColor);
                     child.material.emissive.setHex(newColor);
-                    // Set base intensity: bright for owned, dim for neutral/capturing
                     child.material.emissiveIntensity = isFullyOwned ? 2.0 : 0.8;
-                    child.material.needsUpdate = true;
                     hasCore = true;
                     return;
                 }
@@ -199,6 +215,9 @@ export class SphereRenderer {
                 hasLight = true;
             }
         });
+
+        // Update tracked color
+        sphereGroup.userData.currentColor = newColor;
 
         // Core always exists now (added in createSphere), just update intensity above
 

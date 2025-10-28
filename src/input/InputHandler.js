@@ -31,10 +31,13 @@ export class InputHandler {
 
         // Camera controls state
         this.isPanning = false;
+        this.isRotating = false;
         this.previousPanPosition = { x: 0, y: 0 };
+        this.previousRotatePosition = { x: 0, y: 0 };
         this.zoomLevel = 1.0;  // 1.0 = default view
         this.minZoom = 0.5;    // Can zoom out to 2x area
         this.maxZoom = 3.0;    // Can zoom in to 3x magnification
+        this.cameraAngle = 0;  // Rotation angle in radians
 
         // Bind event handlers
         this.onPointerDown = this.onPointerDown.bind(this);
@@ -57,6 +60,9 @@ export class InputHandler {
         this.canvas.addEventListener('mousemove', this.onPointerMove);
         this.canvas.addEventListener('mouseup', this.onPointerUp);
         this.canvas.addEventListener('wheel', this.onWheel, { passive: false });
+
+        // Prevent context menu on right-click (we use it for rotation)
+        this.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
         // Touch events
         this.canvas.addEventListener('touchstart', this.onPointerDown, { passive: false });
@@ -83,6 +89,18 @@ export class InputHandler {
                 y: event.clientY
             };
             this.canvas.style.cursor = 'grabbing';
+            return;
+        }
+
+        // Check for right mouse button (button = 2) for rotation
+        if (event.button === 2) {
+            event.preventDefault();
+            this.isRotating = true;
+            this.previousRotatePosition = {
+                x: event.clientX,
+                y: event.clientY
+            };
+            this.canvas.style.cursor = 'grab';
             return;
         }
 
@@ -298,6 +316,41 @@ export class InputHandler {
             return; // Skip tooltip while panning
         }
 
+        // Handle rotation if right button is held
+        if (this.isRotating) {
+            const deltaX = event.clientX - this.previousRotatePosition.x;
+
+            this.previousRotatePosition = {
+                x: event.clientX,
+                y: event.clientY
+            };
+
+            // Rotate camera around Z axis (horizontal mouse movement = rotation)
+            const rotateSpeed = 0.005;
+            this.cameraAngle += deltaX * rotateSpeed;
+
+            // Apply rotation: rotate entire scene view around center
+            // For orthographic top-down, we rotate the camera's position around origin
+            // while keeping it looking at origin
+            const distance = 20; // Camera distance from origin (z-axis)
+            this.camera.position.set(
+                0,
+                0,
+                distance
+            );
+            this.camera.lookAt(0, 0, 0);
+
+            // Rotate camera's up vector to rotate the view
+            this.camera.up.set(
+                Math.sin(this.cameraAngle),
+                Math.cos(this.cameraAngle),
+                0
+            );
+            this.camera.updateProjectionMatrix();
+
+            return; // Skip tooltip while rotating
+        }
+
         // Get pointer position
         const rect = this.canvas.getBoundingClientRect();
         const x = event.clientX - rect.left;
@@ -369,12 +422,16 @@ export class InputHandler {
     }
 
     /**
-     * Handle pointer up (end panning)
+     * Handle pointer up (end panning/rotating)
      * @param {MouseEvent} event
      */
     onPointerUp(event) {
         if (event.button === 1 || this.isPanning) {
             this.isPanning = false;
+            this.canvas.style.cursor = 'default';
+        }
+        if (event.button === 2 || this.isRotating) {
+            this.isRotating = false;
             this.canvas.style.cursor = 'default';
         }
     }
