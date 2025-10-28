@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pyramids - Sphere Rendering Test</title>
+    <title>Solar Sphere Collection</title>
     <style>
         * {
             margin: 0;
@@ -30,27 +30,15 @@
         }
 
         #header h1 {
-            font-size: 24px;
+            font-size: 28px;
             color: #FF6B35;
-            margin-bottom: 10px;
-        }
-
-        #set-info {
-            font-size: 16px;
-            color: #00D9FF;
-            margin-bottom: 10px;
-            font-weight: bold;
+            margin-bottom: 5px;
         }
 
         #header p {
             font-size: 14px;
             color: #808080;
             margin-bottom: 15px;
-        }
-
-        #selected-count {
-            color: #00D9FF;
-            font-weight: bold;
         }
 
         #controls {
@@ -62,16 +50,14 @@
         .btn {
             padding: 10px 20px;
             background: #1a1a2e;
-            color: white;
             border: 2px solid #FF6B35;
-            border-radius: 5px;
-            cursor: pointer;
+            color: white;
             font-family: 'Courier New', monospace;
-            font-size: 14px;
+            cursor: pointer;
             transition: all 0.3s;
         }
 
-        .btn:hover {
+        .btn:hover:not(:disabled) {
             background: #FF6B35;
             transform: translateY(-2px);
         }
@@ -81,113 +67,66 @@
             cursor: not-allowed;
         }
 
-        .btn:disabled:hover {
-            background: #1a1a2e;
-            transform: none;
-        }
-
         #grid-container {
-            margin-top: 200px;
-            padding: 20px;
+            padding-top: 160px;
+            padding-bottom: 40px;
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-            max-width: 1600px;
-            margin-left: auto;
-            margin-right: auto;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            padding-left: 30px;
+            padding-right: 30px;
         }
 
         .sphere-card {
             background: #0f0f1e;
-            border: 2px solid #1a1a2e;
-            border-radius: 10px;
-            overflow: hidden;
+            border: 2px solid #2a2a3e;
+            border-radius: 8px;
+            padding: 20px;
             cursor: pointer;
             transition: all 0.3s;
-            position: relative;
         }
 
         .sphere-card:hover {
             border-color: #FF6B35;
             transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(255, 107, 53, 0.3);
         }
 
         .sphere-card.selected {
-            border-color: #00D9FF;
-            background: rgba(0, 217, 255, 0.1);
+            border-color: #00FF00;
+            background: #1a1a3e;
+        }
+
+        .sphere-card h3 {
+            color: #FF6B35;
+            margin-bottom: 5px;
+            font-size: 18px;
+        }
+
+        .sphere-card .tech {
+            color: #808080;
+            font-size: 12px;
+            margin-bottom: 15px;
         }
 
         .sphere-card canvas {
             width: 100%;
-            height: 200px;
-            display: block;
+            height: 250px;
+            border-radius: 4px;
         }
 
-        .sphere-info {
-            padding: 10px;
-            text-align: center;
-        }
-
-        .sphere-id {
-            font-size: 20px;
+        #selected-count {
+            color: #00FF00;
             font-weight: bold;
-            color: #FF6B35;
-            margin-bottom: 5px;
-        }
-
-        .sphere-name {
-            font-size: 14px;
-            color: white;
-            margin-bottom: 5px;
-        }
-
-        .sphere-tech {
-            font-size: 11px;
-            color: #808080;
-            line-height: 1.4;
-        }
-
-        .selection-badge {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: #00D9FF;
-            color: #000510;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 18px;
-        }
-
-        .sphere-card.selected .selection-badge {
-            display: flex;
-        }
-
-        @media (max-width: 1200px) {
-            #grid-container {
-                grid-template-columns: repeat(3, 1fr);
-            }
-        }
-
-        @media (max-width: 800px) {
-            #grid-container {
-                grid-template-columns: repeat(2, 1fr);
-            }
         }
     </style>
 </head>
 <body>
     <div id="header">
-        <h1>🎨 Sphere Rendering Test - Intel iGPU Compatibility</h1>
-        <div id="set-info">Set <span id="current-set">1</span> of <span id="total-sets">2</span></div>
+        <h1>☀️ Solar Sphere Collection</h1>
+        <p>16 sun-inspired sphere designs with plasma core effects (inspired by P16)</p>
         <p>Click on spheres to select your favorites. Selected: <span id="selected-count">0</span>/16</p>
         <div id="controls">
-            <button class="btn" id="prev-set-btn" disabled>← Previous Set</button>
-            <button class="btn" id="next-set-btn">Next Set →</button>
             <button class="btn" id="clear-btn">Clear Selection</button>
             <button class="btn" id="show-selected-btn" disabled>Show Selected IDs</button>
             <button class="btn" id="back-game-btn">← Back to Game</button>
@@ -199,984 +138,299 @@
     <script type="module">
         import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
 
-        // Design Sets
-        const designSets = [
-            // SET 1: Original 16 designs
-            {
-                name: "Initial Exploration",
-                designs: [
-                    { id: 'A1', name: 'Current Design', tech: 'Glass shell + glowing core (MeshStandard)', create: createCurrentDesign },
-                    { id: 'A2', name: 'Solid Emissive', tech: 'Single sphere, high emissive (MeshStandard)', create: createSolidEmissive },
-                    { id: 'A3', name: 'Layered Glow', tech: 'Core + 2 glow layers (additive blending)', create: createLayeredGlow },
-                    { id: 'A4', name: 'Sprite Glow', tech: 'Sphere + sprite-based halo', create: createSpriteGlow },
-                    { id: 'B1', name: 'Point Light Focus', tech: 'Dim sphere + strong point light', create: createPointLightFocus },
-                    { id: 'B2', name: 'Particle Core', tech: 'Sphere + particle system inside', create: createParticleCore },
-                    { id: 'B3', name: 'Fresnel Rim', tech: 'Shader-based rim lighting simulation', create: createFresnelRim },
-                    { id: 'B4', name: 'Double Shell', tech: 'Two transparent spheres, different sizes', create: createDoubleShell },
-                    { id: 'C1', name: 'Basic Lit', tech: 'MeshBasicMaterial + external lighting', create: createBasicLit },
-                    { id: 'C2', name: 'Metallic Sphere', tech: 'High metalness + roughness variation', create: createMetallic },
-                    { id: 'C3', name: 'Flat + Shadow', tech: 'Flat color + fake shadow plane', create: createFlatShadow },
-                    { id: 'C4', name: 'Pulsing Scale', tech: 'Size animation focus, minimal glow', create: createPulsingScale },
-                    { id: 'D1', name: 'Ring Effect', tech: 'Sphere + Saturn-like ring', create: createRingEffect },
-                    { id: 'D2', name: 'Multi-Light', tech: 'Multiple small point lights around sphere', create: createMultiLight },
-                    { id: 'D3', name: 'Bloom Sim', tech: 'Bright core + multiple blur layers', create: createBloomSim },
-                    { id: 'D4', name: 'Gradient Texture', tech: 'Radial gradient canvas texture', create: createGradientTexture }
-                ]
-            },
-            // SET 2: Iterations on A2, B2, C4, D1 (user favorites)
-            {
-                name: "Refined Favorites (A2, B2, C4, D1 variations)",
-                designs: [
-                    { id: 'A2-1', name: 'Solid Emissive+', tech: 'A2 + subtle pulse + higher intensity', create: createSolidEmissivePlus },
-                    { id: 'A2-2', name: 'Solid Dual-Tone', tech: 'A2 + emissive + color variation', create: createSolidDualTone },
-                    { id: 'A2-3', name: 'Solid + Halo', tech: 'A2 + transparent outer halo layer', create: createSolidHalo },
-                    { id: 'A2-4', name: 'Solid Pulsing', tech: 'A2 + dramatic pulse animation', create: createSolidPulsing },
-                    { id: 'B2-1', name: 'Dense Particles', tech: 'B2 + 2x particle count, slower motion', create: createDenseParticles },
-                    { id: 'B2-2', name: 'Particle Flow', tech: 'B2 + directional particle movement', create: createParticleFlow },
-                    { id: 'B2-3', name: 'Particle Shell', tech: 'B2 + particles on sphere surface', create: createParticleShell },
-                    { id: 'B2-4', name: 'Particle Burst', tech: 'B2 + expanding particle effect', create: createParticleBurst },
-                    { id: 'C4-1', name: 'Pulse + Glow', tech: 'C4 + emissive core, larger scale', create: createPulseGlow },
-                    { id: 'C4-2', name: 'Pulse + Wobble', tech: 'C4 + scale + slight deformation', create: createPulseWobble },
-                    { id: 'C4-3', name: 'Elastic Pulse', tech: 'C4 + bounce-like scale animation', create: createElasticPulse },
-                    { id: 'C4-4', name: 'Breath Pulse', tech: 'C4 + slow, organic breathing motion', create: createBreathPulse },
-                    { id: 'D1-1', name: 'Thick Ring', tech: 'D1 + wider ring, more opacity', create: createThickRing },
-                    { id: 'D1-2', name: 'Double Ring', tech: 'D1 + two rings at different angles', create: createDoubleRing },
-                    { id: 'D1-3', name: 'Rotating Ring', tech: 'D1 + ring rotation animation', create: createRotatingRing },
-                    { id: 'D1-4', name: 'Glowing Ring', tech: 'D1 + emissive ring material', create: createGlowingRing }
-                ]
-            },
-            // SET 3: Ultra-refined (A2-3, B2-3, C4-3 deep variations)
-            {
-                name: "Final Refinements (A2-3, B2-3, C4-3 mastery)",
-                designs: [
-                    { id: 'A3-1', name: 'Tight Halo', tech: 'A2-3 + smaller, brighter halo', create: createTightHalo },
-                    { id: 'A3-2', name: 'Wide Halo', tech: 'A2-3 + larger, softer halo', create: createWideHalo },
-                    { id: 'A3-3', name: 'Pulsing Halo', tech: 'A2-3 + animated halo pulse', create: createPulsingHalo },
-                    { id: 'A3-4', name: 'Dual Halo', tech: 'A2-3 + two halo layers', create: createDualHalo },
-                    { id: 'A3-5', name: 'Color Shift Halo', tech: 'A2-3 + gradient halo effect', create: createColorShiftHalo },
-                    { id: 'B3-1', name: 'Dense Shell', tech: 'B2-3 + 2x particle density', create: createDenseShell },
-                    { id: 'B3-2', name: 'Sparse Shell', tech: 'B2-3 + fewer, larger particles', create: createSparseShell },
-                    { id: 'B3-3', name: 'Rotating Shell', tech: 'B2-3 + particle rotation', create: createRotatingShell },
-                    { id: 'B3-4', name: 'Pulsing Shell', tech: 'B2-3 + radial pulse animation', create: createPulsingShell },
-                    { id: 'B3-5', name: 'Layered Shell', tech: 'B2-3 + multiple particle layers', create: createLayeredShell },
-                    { id: 'C3-1', name: 'Fast Elastic', tech: 'C4-3 + faster bounce speed', create: createFastElastic },
-                    { id: 'C3-2', name: 'Gentle Elastic', tech: 'C4-3 + slower, smoother bounce', create: createGentleElastic },
-                    { id: 'C3-3', name: 'Extreme Elastic', tech: 'C4-3 + large scale variation', create: createExtremeElastic },
-                    { id: 'C3-4', name: 'Damped Elastic', tech: 'C4-3 + damping effect', create: createDampedElastic },
-                    { id: 'C3-5', name: 'Spring Elastic', tech: 'C4-3 + spring physics', create: createSpringElastic },
-                    { id: 'X1', name: 'Hybrid Masterpiece', tech: 'Halo + Particle Shell + Elastic', create: createHybridMasterpiece }
-                ]
-            },
-            // SET 4: Final polish (A3-3, A3-5, B3-5, X1 perfection)
-            {
-                name: "The Final Four (Master designs)",
-                designs: [
-                    { id: 'A4-1', name: 'Fast Pulse Halo', tech: 'A3-3 + faster pulse speed', create: createFastPulseHalo },
-                    { id: 'A4-2', name: 'Slow Breath Halo', tech: 'A3-3 + slow breathing pulse', create: createSlowBreathHalo },
-                    { id: 'A4-3', name: 'Double Pulse Halo', tech: 'A3-3 + core + halo pulse together', create: createDoublePulseHalo },
-                    { id: 'A5-1', name: 'Warm Gradient', tech: 'A3-5 + orange→red→pink gradient', create: createWarmGradient },
-                    { id: 'A5-2', name: 'Cool Gradient', tech: 'A3-5 + orange→blue→cyan gradient', create: createCoolGradient },
-                    { id: 'A5-3', name: 'Rainbow Halo', tech: 'A3-5 + multi-color gradient', create: createRainbowHalo },
-                    { id: 'A5-4', name: 'Animated Gradient', tech: 'A3-5 + rotating color shift', create: createAnimatedGradient },
-                    { id: 'A5-5', name: 'Plasma Halo', tech: 'A3-5 + plasma-like color effect', create: createPlasmaHalo },
-                    { id: 'B5-1', name: '4-Layer Shell', tech: 'B3-5 + one more particle layer', create: create4LayerShell },
-                    { id: 'B5-2', name: 'Reverse Layers', tech: 'B3-5 + layers rotate opposite', create: createReverseLayers },
-                    { id: 'B5-3', name: 'Pulsing Layers', tech: 'B3-5 + layers pulse radially', create: createPulsingLayers },
-                    { id: 'X2', name: 'Hybrid v2', tech: 'X1 + gradient halo', create: createHybridV2 },
-                    { id: 'X3', name: 'Hybrid v3', tech: 'X1 + 4 particle layers', create: createHybridV3 },
-                    { id: 'X4', name: 'Hybrid Elite', tech: 'X1 + gradient + 4 layers + spring', create: createHybridElite },
-                    { id: 'X5', name: 'Hybrid Ultimate', tech: 'All techniques combined, polished', create: createHybridUltimate },
-                    { id: 'FINAL', name: 'The One', tech: 'Perfect synthesis of all learnings', create: createTheOne }
-                ]
-            },
-            // SET 5: Plasma Mastery - 16 variations of A5-5
-            {
-                name: "Plasma Mastery (A5-5 exploration)",
-                designs: [
-                    // Color Palette Variations
-                    { id: 'P1', name: 'Classic Plasma', tech: 'Original A5-5 plasma pattern', create: createClassicPlasma },
-                    { id: 'P2', name: 'Fire Plasma', tech: 'Red→orange→yellow heat waves', create: createFirePlasma },
-                    { id: 'P3', name: 'Cool Plasma', tech: 'Blue→cyan→white ice patterns', create: createCoolPlasma },
-                    { id: 'P4', name: 'Toxic Plasma', tech: 'Green→lime→yellow bio-glow', create: createToxicPlasma },
-
-                    // Pattern Algorithm Variations
-                    { id: 'P5', name: 'Turbulent Plasma', tech: 'Chaotic multi-wave interference', create: createTurbulentPlasma },
-                    { id: 'P6', name: 'Ripple Plasma', tech: 'Concentric ripple patterns', create: createRipplePlasma },
-                    { id: 'P7', name: 'Spiral Plasma', tech: 'Angle-based spiral patterns', create: createSpiralPlasma },
-                    { id: 'P8', name: 'Cellular Plasma', tech: 'Voronoi-like cell patterns', create: createCellularPlasma },
-
-                    // Animation Variations
-                    { id: 'P9', name: 'Flowing Plasma', tech: 'Time-animated flowing energy', create: createFlowingPlasma },
-                    { id: 'P10', name: 'Breathing Plasma', tech: 'Pulsing opacity and scale', create: createBreathingPlasma },
-                    { id: 'P11', name: 'Spinning Plasma', tech: 'Rotating plasma texture', create: createSpinningPlasma },
-                    { id: 'P12', name: 'Morphing Plasma', tech: 'Time-evolving pattern changes', create: createMorphingPlasma },
-
-                    // Hybrid Variations
-                    { id: 'P13', name: 'Plasma + Particles', tech: 'Plasma halo + particle shell', create: createPlasmaParticles },
-                    { id: 'P14', name: 'Plasma + Ring', tech: 'Plasma halo + rotating ring', create: createPlasmaRing },
-                    { id: 'P15', name: 'Dual Plasma', tech: 'Two plasma layers, different patterns', create: createDualPlasma },
-                    { id: 'P16', name: 'Plasma Core', tech: 'Plasma texture on core + outer halo', create: createPlasmaCore }
-                ]
-            }
+        const designs = [
+            { id: 'S1', name: 'Classic Sun', tech: 'Original plasma core design', create: createClassicSun },
+            { id: 'S2', name: 'Fire Sun', tech: 'Red-orange heat plasma', create: createFireSun },
+            { id: 'S3', name: 'Cool Sun', tech: 'Blue-cyan ice plasma', create: createCoolSun },
+            { id: 'S4', name: 'Toxic Sun', tech: 'Green-lime bio plasma', create: createToxicSun },
+            { id: 'S5', name: 'Intense Sun', tech: 'Higher emissive intensity', create: createIntenseSun },
+            { id: 'S6', name: 'Soft Sun', tech: 'Gentler, softer glow', create: createSoftSun },
+            { id: 'S7', name: 'Fast Spin Sun', tech: 'Rapid rotation speed', create: createFastSpinSun },
+            { id: 'S8', name: 'Slow Spin Sun', tech: 'Gentle rotation', create: createSlowSpinSun },
+            { id: 'S9', name: 'Turbulent Sun', tech: 'Chaotic plasma waves', create: createTurbulentSun },
+            { id: 'S10', name: 'Ripple Sun', tech: 'Concentric ripples', create: createRippleSun },
+            { id: 'S11', name: 'Spiral Sun', tech: 'Spiral plasma arms', create: createSpiralSun },
+            { id: 'S12', name: 'Cellular Sun', tech: 'Cell-like plasma pattern', create: createCellularSun },
+            { id: 'S13', name: 'Pulsing Sun', tech: 'Breathing solar effect', create: createPulsingSun },
+            { id: 'S14', name: 'Dual Core Sun', tech: 'Two plasma layers on core', create: createDualCoreSun },
+            { id: 'S15', name: 'Giant Sun', tech: 'Larger solar sphere', create: createGiantSun },
+            { id: 'S16', name: 'Perfect Sun', tech: 'Optimized final design', create: createPerfectSun }
         ];
 
-        let currentSetIndex = 0;
         let selectedDesigns = new Set();
         let activeScenes = [];
 
-        // Create design functions for SET 1
-        function createCurrentDesign(scene) {
+        // Helper function to create plasma texture
+        function createPlasmaTexture(colorFunc, patternFunc) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+
+            for (let x = 0; x < 256; x++) {
+                for (let y = 0; y < 256; y++) {
+                    const dx = x - 128;
+                    const dy = y - 128;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const angle = Math.atan2(dy, dx);
+                    const value = patternFunc(dist, angle);
+                    const color = colorFunc(value);
+                    ctx.fillStyle = color;
+                    ctx.fillRect(x, y, 1, 1);
+                }
+            }
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        // S1: Classic Sun
+        function createClassicSun(scene) {
             const group = new THREE.Group();
-            const shell = new THREE.Mesh(
-                new THREE.SphereGeometry(0.5, 64, 64),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    transparent: true,
-                    opacity: 0.4,
-                    metalness: 0.1,
-                    roughness: 0.2
-                })
+
+            const coreTexture = createPlasmaTexture(
+                (value) => {
+                    const r = 255;
+                    const g = Math.floor(107 + value * 100);
+                    const b = Math.floor(53 + value * 50);
+                    return `rgb(${r}, ${g}, ${b})`;
+                },
+                (dist, angle) => Math.sin(dist * 0.08 + angle * 4)
             );
+
             const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.3, 32, 32),
+                new THREE.SphereGeometry(0.4, 64, 64),
                 new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
+                    map: coreTexture,
                     emissive: 0xFF6B35,
-                    emissiveIntensity: 2.0
+                    emissiveIntensity: 2.5,
+                    emissiveMap: coreTexture
                 })
             );
             core.userData.isCore = true;
-            group.add(shell);
+            core.userData.rotSpeed = 0.5;
             group.add(core);
-            const light = new THREE.PointLight(0xFF6B35, 1.5, 5);
-            group.add(light);
+
+            // Outer halo
+            const haloTexture = createPlasmaTexture(
+                (value) => {
+                    const r = 255;
+                    const g = Math.floor(107 + value * 100);
+                    const b = Math.floor(53 + value * 50);
+                    return `rgba(${r}, ${g}, ${b}, ${Math.max(0, (1 - (Math.sqrt((256-128)**2 + (256-128)**2)) / 128) * 0.5)})`;
+                },
+                (dist, angle) => Math.sin(dist * 0.05 + angle * 3)
+            );
+
+            const halo = new THREE.Mesh(
+                new THREE.SphereGeometry(0.7, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    map: haloTexture,
+                    transparent: true,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            group.add(halo);
+
             scene.add(group);
             return group;
         }
 
-        function createSolidEmissive(scene) {
-            const sphere = new THREE.Mesh(
-                new THREE.SphereGeometry(0.5, 64, 64),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 3.0,
-                    metalness: 0,
-                    roughness: 0.3
-                })
-            );
-            sphere.userData.isCore = true;
-            scene.add(sphere);
-            return sphere;
-        }
-
-        function createLayeredGlow(scene) {
+        // S2: Fire Sun
+        function createFireSun(scene) {
             const group = new THREE.Group();
+
+            const coreTexture = createPlasmaTexture(
+                (value) => {
+                    const r = 255;
+                    const g = Math.floor(51 + value * 150);
+                    const b = Math.floor(value * 50);
+                    return `rgb(${r}, ${g}, ${b})`;
+                },
+                (dist, angle) => Math.sin(dist * 0.08 + angle * 4)
+            );
+
             const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.3, 32, 32),
+                new THREE.SphereGeometry(0.4, 64, 64),
                 new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 2.5
+                    map: coreTexture,
+                    emissive: 0xFF3300,
+                    emissiveIntensity: 3.0,
+                    emissiveMap: coreTexture
                 })
             );
             core.userData.isCore = true;
-            const glow1 = new THREE.Mesh(
-                new THREE.SphereGeometry(0.4, 32, 32),
+            core.userData.rotSpeed = 0.5;
+            group.add(core);
+
+            const halo = new THREE.Mesh(
+                new THREE.SphereGeometry(0.7, 32, 32),
                 new THREE.MeshBasicMaterial({
-                    color: 0xFF6B35,
+                    color: 0xFF3300,
                     transparent: true,
                     opacity: 0.3,
                     blending: THREE.AdditiveBlending
                 })
             );
-            const glow2 = new THREE.Mesh(
-                new THREE.SphereGeometry(0.5, 32, 32),
-                new THREE.MeshBasicMaterial({
-                    color: 0xFF6B35,
-                    transparent: true,
-                    opacity: 0.15,
-                    blending: THREE.AdditiveBlending
-                })
-            );
-            group.add(core);
-            group.add(glow1);
-            group.add(glow2);
+            group.add(halo);
+
             scene.add(group);
             return group;
         }
 
-        function createSpriteGlow(scene) {
+        // S3: Cool Sun
+        function createCoolSun(scene) {
             const group = new THREE.Group();
-            const sphere = new THREE.Mesh(
-                new THREE.SphereGeometry(0.4, 32, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 1.5
-                })
-            );
-            const canvas = document.createElement('canvas');
-            canvas.width = 128;
-            canvas.height = 128;
-            const ctx = canvas.getContext('2d');
-            const gradient = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
-            gradient.addColorStop(0, 'rgba(255, 107, 53, 0.8)');
-            gradient.addColorStop(1, 'rgba(255, 107, 53, 0)');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, 128, 128);
-            const texture = new THREE.CanvasTexture(canvas);
-            const spriteMaterial = new THREE.SpriteMaterial({
-                map: texture,
-                blending: THREE.AdditiveBlending
-            });
-            const sprite = new THREE.Sprite(spriteMaterial);
-            sprite.scale.set(1.5, 1.5, 1);
-            group.add(sphere);
-            group.add(sprite);
-            scene.add(group);
-            return group;
-        }
 
-        function createPointLightFocus(scene) {
-            const group = new THREE.Group();
-            const sphere = new THREE.Mesh(
-                new THREE.SphereGeometry(0.4, 32, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 0.3
-                })
+            const coreTexture = createPlasmaTexture(
+                (value) => {
+                    const r = Math.floor(value * 100 + 100);
+                    const g = Math.floor(217 + value * 38);
+                    const b = 255;
+                    return `rgb(${r}, ${g}, ${b})`;
+                },
+                (dist, angle) => Math.sin(dist * 0.08 + angle * 4)
             );
-            const light = new THREE.PointLight(0xFF6B35, 3.0, 8);
-            group.add(sphere);
-            group.add(light);
-            scene.add(group);
-            return group;
-        }
 
-        function createParticleCore(scene) {
-            const group = new THREE.Group();
-            const shell = new THREE.Mesh(
-                new THREE.SphereGeometry(0.5, 32, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    transparent: true,
-                    opacity: 0.3
-                })
-            );
-            const particleCount = 100;
-            const geometry = new THREE.BufferGeometry();
-            const positions = new Float32Array(particleCount * 3);
-            for (let i = 0; i < particleCount * 3; i++) {
-                positions[i] = (Math.random() - 0.5) * 0.6;
-            }
-            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            const material = new THREE.PointsMaterial({
-                color: 0xFF6B35,
-                size: 0.05,
-                transparent: true,
-                opacity: 0.8,
-                blending: THREE.AdditiveBlending
-            });
-            const particles = new THREE.Points(geometry, material);
-            particles.userData.isParticles = true;
-            group.add(shell);
-            group.add(particles);
-            scene.add(group);
-            return group;
-        }
-
-        function createFresnelRim(scene) {
-            const sphere = new THREE.Mesh(
-                new THREE.SphereGeometry(0.5, 64, 64),
-                new THREE.MeshStandardMaterial({
-                    color: 0x331100,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 0.5,
-                    metalness: 0.8,
-                    roughness: 0.2
-                })
-            );
-            sphere.userData.isCore = true;
-            scene.add(sphere);
-            return sphere;
-        }
-
-        function createDoubleShell(scene) {
-            const group = new THREE.Group();
-            const inner = new THREE.Mesh(
-                new THREE.SphereGeometry(0.35, 32, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    transparent: true,
-                    opacity: 0.6,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 1.0
-                })
-            );
-            const outer = new THREE.Mesh(
-                new THREE.SphereGeometry(0.5, 32, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    transparent: true,
-                    opacity: 0.2
-                })
-            );
-            group.add(inner);
-            group.add(outer);
-            scene.add(group);
-            return group;
-        }
-
-        function createBasicLit(scene) {
-            const sphere = new THREE.Mesh(
-                new THREE.SphereGeometry(0.5, 32, 32),
-                new THREE.MeshBasicMaterial({
-                    color: 0xFF6B35
-                })
-            );
-            scene.add(sphere);
-            return sphere;
-        }
-
-        function createMetallic(scene) {
-            const sphere = new THREE.Mesh(
-                new THREE.SphereGeometry(0.5, 64, 64),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    metalness: 0.9,
-                    roughness: 0.3,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 0.5
-                })
-            );
-            scene.add(sphere);
-            return sphere;
-        }
-
-        function createFlatShadow(scene) {
-            const group = new THREE.Group();
-            const sphere = new THREE.Mesh(
-                new THREE.SphereGeometry(0.5, 32, 32),
-                new THREE.MeshBasicMaterial({
-                    color: 0xFF6B35
-                })
-            );
-            const shadow = new THREE.Mesh(
-                new THREE.CircleGeometry(0.6, 32),
-                new THREE.MeshBasicMaterial({
-                    color: 0x000000,
-                    transparent: true,
-                    opacity: 0.3
-                })
-            );
-            shadow.rotation.x = -Math.PI / 2;
-            shadow.position.y = -0.5;
-            group.add(sphere);
-            group.add(shadow);
-            scene.add(group);
-            return group;
-        }
-
-        function createPulsingScale(scene) {
-            const sphere = new THREE.Mesh(
-                new THREE.SphereGeometry(0.5, 32, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 0.5
-                })
-            );
-            sphere.userData.isPulsing = true;
-            scene.add(sphere);
-            return sphere;
-        }
-
-        function createRingEffect(scene) {
-            const group = new THREE.Group();
-            const sphere = new THREE.Mesh(
-                new THREE.SphereGeometry(0.4, 32, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 1.5
-                })
-            );
-            const ring = new THREE.Mesh(
-                new THREE.RingGeometry(0.6, 0.8, 32),
-                new THREE.MeshBasicMaterial({
-                    color: 0xFF6B35,
-                    transparent: true,
-                    opacity: 0.4,
-                    side: THREE.DoubleSide
-                })
-            );
-            ring.rotation.x = Math.PI / 4;
-            ring.userData.isRing = true;
-            group.add(sphere);
-            group.add(ring);
-            scene.add(group);
-            return group;
-        }
-
-        function createMultiLight(scene) {
-            const group = new THREE.Group();
-            const sphere = new THREE.Mesh(
-                new THREE.SphereGeometry(0.4, 32, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35
-                })
-            );
-            group.add(sphere);
-            for (let i = 0; i < 4; i++) {
-                const angle = (i / 4) * Math.PI * 2;
-                const light = new THREE.PointLight(0xFF6B35, 1.0, 3);
-                light.position.set(Math.cos(angle) * 0.6, 0, Math.sin(angle) * 0.6);
-                group.add(light);
-            }
-            scene.add(group);
-            return group;
-        }
-
-        function createBloomSim(scene) {
-            const group = new THREE.Group();
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.25, 32, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 3.0
-                })
-            );
-            for (let i = 0; i < 3; i++) {
-                const blur = new THREE.Mesh(
-                    new THREE.SphereGeometry(0.3 + i * 0.1, 16, 16),
-                    new THREE.MeshBasicMaterial({
-                        color: 0xFF6B35,
-                        transparent: true,
-                        opacity: 0.2 - i * 0.05,
-                        blending: THREE.AdditiveBlending
-                    })
-                );
-                group.add(blur);
-            }
-            group.add(core);
-            scene.add(group);
-            return group;
-        }
-
-        function createGradientTexture(scene) {
-            const canvas = document.createElement('canvas');
-            canvas.width = 256;
-            canvas.height = 256;
-            const ctx = canvas.getContext('2d');
-            const gradient = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
-            gradient.addColorStop(0, '#FF6B35');
-            gradient.addColorStop(1, '#331100');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, 256, 256);
-            const texture = new THREE.CanvasTexture(canvas);
-            const sphere = new THREE.Mesh(
-                new THREE.SphereGeometry(0.5, 64, 64),
-                new THREE.MeshStandardMaterial({
-                    map: texture,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 0.5
-                })
-            );
-            scene.add(sphere);
-            return sphere;
-        }
-
-        // SET 2: Refined variations
-        function createSolidEmissivePlus(scene) {
-            const sphere = new THREE.Mesh(
-                new THREE.SphereGeometry(0.5, 64, 64),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 4.0,
-                    metalness: 0,
-                    roughness: 0.2
-                })
-            );
-            sphere.userData.isCore = true;
-            sphere.userData.pulseFast = true;
-            scene.add(sphere);
-            return sphere;
-        }
-
-        function createSolidDualTone(scene) {
-            const group = new THREE.Group();
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.35, 32, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFFFFFF,
-                    emissive: 0xFFFFFF,
-                    emissiveIntensity: 3.0
-                })
-            );
-            const shell = new THREE.Mesh(
-                new THREE.SphereGeometry(0.5, 64, 64),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 1.5,
-                    transparent: true,
-                    opacity: 0.7
-                })
-            );
-            core.userData.isCore = true;
-            group.add(core);
-            group.add(shell);
-            scene.add(group);
-            return group;
-        }
-
-        function createSolidHalo(scene) {
-            const group = new THREE.Group();
             const core = new THREE.Mesh(
                 new THREE.SphereGeometry(0.4, 64, 64),
                 new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 3.0
+                    map: coreTexture,
+                    emissive: 0x00D9FF,
+                    emissiveIntensity: 2.5,
+                    emissiveMap: coreTexture
                 })
             );
+            core.userData.isCore = true;
+            core.userData.rotSpeed = 0.5;
+            group.add(core);
+
             const halo = new THREE.Mesh(
-                new THREE.SphereGeometry(0.6, 32, 32),
+                new THREE.SphereGeometry(0.7, 32, 32),
                 new THREE.MeshBasicMaterial({
-                    color: 0xFF6B35,
+                    color: 0x00D9FF,
                     transparent: true,
-                    opacity: 0.2,
+                    opacity: 0.3,
                     blending: THREE.AdditiveBlending
                 })
             );
-            core.userData.isCore = true;
-            group.add(core);
             group.add(halo);
+
             scene.add(group);
             return group;
         }
 
-        function createSolidPulsing(scene) {
-            const sphere = new THREE.Mesh(
-                new THREE.SphereGeometry(0.5, 64, 64),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 3.0
-                })
-            );
-            sphere.userData.isCore = true;
-            sphere.userData.pulseDramatic = true;
-            scene.add(sphere);
-            return sphere;
-        }
-
-        function createDenseParticles(scene) {
+        // S4: Toxic Sun
+        function createToxicSun(scene) {
             const group = new THREE.Group();
-            const shell = new THREE.Mesh(
-                new THREE.SphereGeometry(0.5, 32, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    transparent: true,
-                    opacity: 0.25
-                })
-            );
-            const particleCount = 200;
-            const geometry = new THREE.BufferGeometry();
-            const positions = new Float32Array(particleCount * 3);
-            for (let i = 0; i < particleCount * 3; i++) {
-                positions[i] = (Math.random() - 0.5) * 0.7;
-            }
-            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            const material = new THREE.PointsMaterial({
-                color: 0xFF6B35,
-                size: 0.04,
-                transparent: true,
-                opacity: 0.9,
-                blending: THREE.AdditiveBlending
-            });
-            const particles = new THREE.Points(geometry, material);
-            particles.userData.isParticles = true;
-            particles.userData.slowMotion = true;
-            group.add(shell);
-            group.add(particles);
-            scene.add(group);
-            return group;
-        }
 
-        function createParticleFlow(scene) {
-            const group = new THREE.Group();
-            const shell = new THREE.Mesh(
-                new THREE.SphereGeometry(0.5, 32, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    transparent: true,
-                    opacity: 0.3
-                })
+            const coreTexture = createPlasmaTexture(
+                (value) => {
+                    const r = Math.floor(value * 100 + 100);
+                    const g = 255;
+                    const b = Math.floor(value * 50);
+                    return `rgb(${r}, ${g}, ${b})`;
+                },
+                (dist, angle) => Math.sin(dist * 0.08 + angle * 4)
             );
-            const particleCount = 150;
-            const geometry = new THREE.BufferGeometry();
-            const positions = new Float32Array(particleCount * 3);
-            for (let i = 0; i < particleCount; i++) {
-                const angle = (i / particleCount) * Math.PI * 2;
-                const radius = 0.3 + Math.random() * 0.2;
-                positions[i * 3] = Math.cos(angle) * radius;
-                positions[i * 3 + 1] = (Math.random() - 0.5) * 0.4;
-                positions[i * 3 + 2] = Math.sin(angle) * radius;
-            }
-            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            const material = new THREE.PointsMaterial({
-                color: 0xFF6B35,
-                size: 0.05,
-                transparent: true,
-                opacity: 0.8,
-                blending: THREE.AdditiveBlending
-            });
-            const particles = new THREE.Points(geometry, material);
-            particles.userData.isParticles = true;
-            particles.userData.flowPattern = true;
-            group.add(shell);
-            group.add(particles);
-            scene.add(group);
-            return group;
-        }
 
-        function createParticleShell(scene) {
-            const group = new THREE.Group();
             const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.35, 32, 32),
+                new THREE.SphereGeometry(0.4, 64, 64),
                 new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 1.5
-                })
-            );
-            const particleCount = 120;
-            const geometry = new THREE.BufferGeometry();
-            const positions = new Float32Array(particleCount * 3);
-            for (let i = 0; i < particleCount; i++) {
-                const phi = Math.acos(2 * Math.random() - 1);
-                const theta = Math.random() * Math.PI * 2;
-                const radius = 0.5;
-                positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
-                positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-                positions[i * 3 + 2] = radius * Math.cos(phi);
-            }
-            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            const material = new THREE.PointsMaterial({
-                color: 0xFF6B35,
-                size: 0.06,
-                transparent: true,
-                opacity: 0.7,
-                blending: THREE.AdditiveBlending
-            });
-            const particles = new THREE.Points(geometry, material);
-            particles.userData.isParticles = true;
-            group.add(core);
-            group.add(particles);
-            scene.add(group);
-            return group;
-        }
-
-        function createParticleBurst(scene) {
-            const group = new THREE.Group();
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.3, 32, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 2.0
-                })
-            );
-            const particleCount = 80;
-            const geometry = new THREE.BufferGeometry();
-            const positions = new Float32Array(particleCount * 3);
-            for (let i = 0; i < particleCount * 3; i++) {
-                positions[i] = (Math.random() - 0.5) * 0.4;
-            }
-            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            const material = new THREE.PointsMaterial({
-                color: 0xFF6B35,
-                size: 0.07,
-                transparent: true,
-                opacity: 0.9,
-                blending: THREE.AdditiveBlending
-            });
-            const particles = new THREE.Points(geometry, material);
-            particles.userData.isParticles = true;
-            particles.userData.burstPattern = true;
-            group.add(core);
-            group.add(particles);
-            scene.add(group);
-            return group;
-        }
-
-        function createPulseGlow(scene) {
-            const group = new THREE.Group();
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.35, 32, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 2.5
+                    map: coreTexture,
+                    emissive: 0x00FF00,
+                    emissiveIntensity: 2.5,
+                    emissiveMap: coreTexture
                 })
             );
             core.userData.isCore = true;
-            const shell = new THREE.Mesh(
-                new THREE.SphereGeometry(0.5, 32, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    transparent: true,
-                    opacity: 0.3
-                })
-            );
-            shell.userData.isPulsing = true;
-            shell.userData.largeScale = true;
+            core.userData.rotSpeed = 0.5;
             group.add(core);
-            group.add(shell);
-            scene.add(group);
-            return group;
-        }
 
-        function createPulseWobble(scene) {
-            const sphere = new THREE.Mesh(
-                new THREE.SphereGeometry(0.5, 32, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 1.0
-                })
-            );
-            sphere.userData.isPulsing = true;
-            sphere.userData.wobble = true;
-            scene.add(sphere);
-            return sphere;
-        }
-
-        function createElasticPulse(scene) {
-            const sphere = new THREE.Mesh(
-                new THREE.SphereGeometry(0.5, 32, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 1.0
-                })
-            );
-            sphere.userData.isPulsing = true;
-            sphere.userData.elastic = true;
-            scene.add(sphere);
-            return sphere;
-        }
-
-        function createBreathPulse(scene) {
-            const sphere = new THREE.Mesh(
-                new THREE.SphereGeometry(0.5, 32, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 1.2
-                })
-            );
-            sphere.userData.isPulsing = true;
-            sphere.userData.breath = true;
-            scene.add(sphere);
-            return sphere;
-        }
-
-        function createThickRing(scene) {
-            const group = new THREE.Group();
-            const sphere = new THREE.Mesh(
-                new THREE.SphereGeometry(0.4, 32, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 1.5
-                })
-            );
-            const ring = new THREE.Mesh(
-                new THREE.RingGeometry(0.55, 0.85, 32),
+            const halo = new THREE.Mesh(
+                new THREE.SphereGeometry(0.7, 32, 32),
                 new THREE.MeshBasicMaterial({
-                    color: 0xFF6B35,
+                    color: 0x00FF00,
                     transparent: true,
-                    opacity: 0.6,
-                    side: THREE.DoubleSide
+                    opacity: 0.3,
+                    blending: THREE.AdditiveBlending
                 })
             );
-            ring.rotation.x = Math.PI / 4;
-            ring.userData.isRing = true;
-            group.add(sphere);
-            group.add(ring);
+            group.add(halo);
+
             scene.add(group);
             return group;
         }
 
-        function createDoubleRing(scene) {
+        // S5: Intense Sun
+        function createIntenseSun(scene) {
             const group = new THREE.Group();
-            const sphere = new THREE.Mesh(
-                new THREE.SphereGeometry(0.4, 32, 32),
+
+            const coreTexture = createPlasmaTexture(
+                (value) => {
+                    const r = 255;
+                    const g = Math.floor(107 + value * 100);
+                    const b = Math.floor(53 + value * 50);
+                    return `rgb(${r}, ${g}, ${b})`;
+                },
+                (dist, angle) => Math.sin(dist * 0.08 + angle * 4)
+            );
+
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.4, 64, 64),
                 new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
+                    map: coreTexture,
                     emissive: 0xFF6B35,
-                    emissiveIntensity: 1.5
+                    emissiveIntensity: 4.0,
+                    emissiveMap: coreTexture
                 })
             );
-            const ring1 = new THREE.Mesh(
-                new THREE.RingGeometry(0.6, 0.75, 32),
+            core.userData.isCore = true;
+            core.userData.rotSpeed = 0.5;
+            group.add(core);
+
+            const halo = new THREE.Mesh(
+                new THREE.SphereGeometry(0.7, 32, 32),
                 new THREE.MeshBasicMaterial({
                     color: 0xFF6B35,
                     transparent: true,
                     opacity: 0.5,
-                    side: THREE.DoubleSide
-                })
-            );
-            ring1.rotation.x = Math.PI / 4;
-            ring1.userData.isRing = true;
-            const ring2 = new THREE.Mesh(
-                new THREE.RingGeometry(0.6, 0.75, 32),
-                new THREE.MeshBasicMaterial({
-                    color: 0xFF6B35,
-                    transparent: true,
-                    opacity: 0.3,
-                    side: THREE.DoubleSide
-                })
-            );
-            ring2.rotation.x = -Math.PI / 4;
-            ring2.rotation.z = Math.PI / 2;
-            ring2.userData.isRing = true;
-            group.add(sphere);
-            group.add(ring1);
-            group.add(ring2);
-            scene.add(group);
-            return group;
-        }
-
-        function createRotatingRing(scene) {
-            const group = new THREE.Group();
-            const sphere = new THREE.Mesh(
-                new THREE.SphereGeometry(0.4, 32, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 1.5
-                })
-            );
-            const ring = new THREE.Mesh(
-                new THREE.RingGeometry(0.6, 0.8, 32),
-                new THREE.MeshBasicMaterial({
-                    color: 0xFF6B35,
-                    transparent: true,
-                    opacity: 0.4,
-                    side: THREE.DoubleSide
-                })
-            );
-            ring.rotation.x = Math.PI / 2;
-            ring.userData.isRing = true;
-            ring.userData.rotating = true;
-            group.add(sphere);
-            group.add(ring);
-            scene.add(group);
-            return group;
-        }
-
-        function createGlowingRing(scene) {
-            const group = new THREE.Group();
-            const sphere = new THREE.Mesh(
-                new THREE.SphereGeometry(0.4, 32, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 1.5
-                })
-            );
-            const ring = new THREE.Mesh(
-                new THREE.RingGeometry(0.6, 0.8, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 2.0,
-                    transparent: true,
-                    opacity: 0.7,
-                    side: THREE.DoubleSide
-                })
-            );
-            ring.rotation.x = Math.PI / 4;
-            ring.userData.isRing = true;
-            ring.userData.glowing = true;
-            group.add(sphere);
-            group.add(ring);
-            scene.add(group);
-            return group;
-        }
-
-        // SET 3: Ultra-refined variations
-        function createTightHalo(scene) {
-            const group = new THREE.Group();
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.4, 64, 64),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 3.5
-                })
-            );
-            const halo = new THREE.Mesh(
-                new THREE.SphereGeometry(0.5, 32, 32),
-                new THREE.MeshBasicMaterial({
-                    color: 0xFF6B35,
-                    transparent: true,
-                    opacity: 0.4,
                     blending: THREE.AdditiveBlending
                 })
             );
-            core.userData.isCore = true;
-            group.add(core);
             group.add(halo);
+
             scene.add(group);
             return group;
         }
 
-        function createWideHalo(scene) {
+        // S6: Soft Sun
+        function createSoftSun(scene) {
             const group = new THREE.Group();
+
+            const coreTexture = createPlasmaTexture(
+                (value) => {
+                    const r = 255;
+                    const g = Math.floor(107 + value * 100);
+                    const b = Math.floor(53 + value * 50);
+                    return `rgb(${r}, ${g}, ${b})`;
+                },
+                (dist, angle) => Math.sin(dist * 0.08 + angle * 4)
+            );
+
             const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.35, 64, 64),
+                new THREE.SphereGeometry(0.4, 64, 64),
                 new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
+                    map: coreTexture,
                     emissive: 0xFF6B35,
-                    emissiveIntensity: 3.0
+                    emissiveIntensity: 1.5,
+                    emissiveMap: coreTexture
                 })
             );
+            core.userData.isCore = true;
+            core.userData.rotSpeed = 0.5;
+            group.add(core);
+
             const halo = new THREE.Mesh(
                 new THREE.SphereGeometry(0.7, 32, 32),
-                new THREE.MeshBasicMaterial({
-                    color: 0xFF6B35,
-                    transparent: true,
-                    opacity: 0.15,
-                    blending: THREE.AdditiveBlending
-                })
-            );
-            core.userData.isCore = true;
-            group.add(core);
-            group.add(halo);
-            scene.add(group);
-            return group;
-        }
-
-        function createPulsingHalo(scene) {
-            const group = new THREE.Group();
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.4, 64, 64),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 3.0
-                })
-            );
-            const halo = new THREE.Mesh(
-                new THREE.SphereGeometry(0.6, 32, 32),
                 new THREE.MeshBasicMaterial({
                     color: 0xFF6B35,
                     transparent: true,
@@ -1184,27 +438,41 @@
                     blending: THREE.AdditiveBlending
                 })
             );
-            core.userData.isCore = true;
-            halo.userData.isPulsing = true;
-            halo.userData.largeScale = true;
-            group.add(core);
             group.add(halo);
+
             scene.add(group);
             return group;
         }
 
-        function createDualHalo(scene) {
+        // S7: Fast Spin Sun
+        function createFastSpinSun(scene) {
             const group = new THREE.Group();
+
+            const coreTexture = createPlasmaTexture(
+                (value) => {
+                    const r = 255;
+                    const g = Math.floor(107 + value * 100);
+                    const b = Math.floor(53 + value * 50);
+                    return `rgb(${r}, ${g}, ${b})`;
+                },
+                (dist, angle) => Math.sin(dist * 0.08 + angle * 4)
+            );
+
             const core = new THREE.Mesh(
                 new THREE.SphereGeometry(0.4, 64, 64),
                 new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
+                    map: coreTexture,
                     emissive: 0xFF6B35,
-                    emissiveIntensity: 3.0
+                    emissiveIntensity: 2.5,
+                    emissiveMap: coreTexture
                 })
             );
-            const halo1 = new THREE.Mesh(
-                new THREE.SphereGeometry(0.55, 32, 32),
+            core.userData.isCore = true;
+            core.userData.rotSpeed = 1.2;
+            group.add(core);
+
+            const halo = new THREE.Mesh(
+                new THREE.SphereGeometry(0.7, 32, 32),
                 new THREE.MeshBasicMaterial({
                     color: 0xFF6B35,
                     transparent: true,
@@ -1212,1557 +480,185 @@
                     blending: THREE.AdditiveBlending
                 })
             );
-            const halo2 = new THREE.Mesh(
-                new THREE.SphereGeometry(0.7, 32, 32),
-                new THREE.MeshBasicMaterial({
-                    color: 0xFF6B35,
-                    transparent: true,
-                    opacity: 0.15,
-                    blending: THREE.AdditiveBlending
-                })
-            );
-            core.userData.isCore = true;
-            group.add(core);
-            group.add(halo1);
-            group.add(halo2);
-            scene.add(group);
-            return group;
-        }
-
-        function createColorShiftHalo(scene) {
-            const group = new THREE.Group();
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.4, 64, 64),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 3.0
-                })
-            );
-            const canvas = document.createElement('canvas');
-            canvas.width = 256;
-            canvas.height = 256;
-            const ctx = canvas.getContext('2d');
-            const gradient = ctx.createRadialGradient(128, 128, 50, 128, 128, 128);
-            gradient.addColorStop(0, 'rgba(255, 107, 53, 0.6)');
-            gradient.addColorStop(0.5, 'rgba(255, 200, 100, 0.3)');
-            gradient.addColorStop(1, 'rgba(255, 107, 53, 0)');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, 256, 256);
-            const texture = new THREE.CanvasTexture(canvas);
-            const halo = new THREE.Mesh(
-                new THREE.SphereGeometry(0.65, 32, 32),
-                new THREE.MeshBasicMaterial({
-                    map: texture,
-                    transparent: true,
-                    blending: THREE.AdditiveBlending
-                })
-            );
-            core.userData.isCore = true;
-            group.add(core);
             group.add(halo);
-            scene.add(group);
-            return group;
-        }
-
-        function createDenseShell(scene) {
-            const group = new THREE.Group();
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.35, 32, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 1.5
-                })
-            );
-            const particleCount = 240;
-            const geometry = new THREE.BufferGeometry();
-            const positions = new Float32Array(particleCount * 3);
-            for (let i = 0; i < particleCount; i++) {
-                const phi = Math.acos(2 * Math.random() - 1);
-                const theta = Math.random() * Math.PI * 2;
-                const radius = 0.5;
-                positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
-                positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-                positions[i * 3 + 2] = radius * Math.cos(phi);
-            }
-            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            const material = new THREE.PointsMaterial({
-                color: 0xFF6B35,
-                size: 0.04,
-                transparent: true,
-                opacity: 0.8,
-                blending: THREE.AdditiveBlending
-            });
-            const particles = new THREE.Points(geometry, material);
-            particles.userData.isParticles = true;
-            group.add(core);
-            group.add(particles);
-            scene.add(group);
-            return group;
-        }
-
-        function createSparseShell(scene) {
-            const group = new THREE.Group();
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.35, 32, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 1.5
-                })
-            );
-            const particleCount = 60;
-            const geometry = new THREE.BufferGeometry();
-            const positions = new Float32Array(particleCount * 3);
-            for (let i = 0; i < particleCount; i++) {
-                const phi = Math.acos(2 * Math.random() - 1);
-                const theta = Math.random() * Math.PI * 2;
-                const radius = 0.5;
-                positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
-                positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-                positions[i * 3 + 2] = radius * Math.cos(phi);
-            }
-            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            const material = new THREE.PointsMaterial({
-                color: 0xFF6B35,
-                size: 0.1,
-                transparent: true,
-                opacity: 0.9,
-                blending: THREE.AdditiveBlending
-            });
-            const particles = new THREE.Points(geometry, material);
-            particles.userData.isParticles = true;
-            group.add(core);
-            group.add(particles);
-            scene.add(group);
-            return group;
-        }
-
-        function createRotatingShell(scene) {
-            const group = new THREE.Group();
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.35, 32, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 1.5
-                })
-            );
-            const particleCount = 120;
-            const geometry = new THREE.BufferGeometry();
-            const positions = new Float32Array(particleCount * 3);
-            for (let i = 0; i < particleCount; i++) {
-                const phi = Math.acos(2 * Math.random() - 1);
-                const theta = Math.random() * Math.PI * 2;
-                const radius = 0.5;
-                positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
-                positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-                positions[i * 3 + 2] = radius * Math.cos(phi);
-            }
-            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            const material = new THREE.PointsMaterial({
-                color: 0xFF6B35,
-                size: 0.06,
-                transparent: true,
-                opacity: 0.7,
-                blending: THREE.AdditiveBlending
-            });
-            const particles = new THREE.Points(geometry, material);
-            particles.userData.isParticles = true;
-            particles.userData.rotating = true;
-            group.add(core);
-            group.add(particles);
-            scene.add(group);
-            return group;
-        }
-
-        function createPulsingShell(scene) {
-            const group = new THREE.Group();
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.35, 32, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 1.5
-                })
-            );
-            const particleCount = 120;
-            const geometry = new THREE.BufferGeometry();
-            const positions = new Float32Array(particleCount * 3);
-            for (let i = 0; i < particleCount; i++) {
-                const phi = Math.acos(2 * Math.random() - 1);
-                const theta = Math.random() * Math.PI * 2;
-                const radius = 0.5;
-                positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
-                positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-                positions[i * 3 + 2] = radius * Math.cos(phi);
-            }
-            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            const material = new THREE.PointsMaterial({
-                color: 0xFF6B35,
-                size: 0.06,
-                transparent: true,
-                opacity: 0.7,
-                blending: THREE.AdditiveBlending
-            });
-            const particles = new THREE.Points(geometry, material);
-            particles.userData.isParticles = true;
-            particles.userData.radialPulse = true;
-            group.add(core);
-            group.add(particles);
-            scene.add(group);
-            return group;
-        }
-
-        function createLayeredShell(scene) {
-            const group = new THREE.Group();
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.3, 32, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 2.0
-                })
-            );
-            group.add(core);
-
-            // Three particle layers at different radii
-            [0.4, 0.5, 0.6].forEach((radius, layerIndex) => {
-                const particleCount = 80 - layerIndex * 20;
-                const geometry = new THREE.BufferGeometry();
-                const positions = new Float32Array(particleCount * 3);
-                for (let i = 0; i < particleCount; i++) {
-                    const phi = Math.acos(2 * Math.random() - 1);
-                    const theta = Math.random() * Math.PI * 2;
-                    positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
-                    positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-                    positions[i * 3 + 2] = radius * Math.cos(phi);
-                }
-                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-                const material = new THREE.PointsMaterial({
-                    color: 0xFF6B35,
-                    size: 0.05 + layerIndex * 0.01,
-                    transparent: true,
-                    opacity: 0.8 - layerIndex * 0.15,
-                    blending: THREE.AdditiveBlending
-                });
-                const particles = new THREE.Points(geometry, material);
-                particles.userData.isParticles = true;
-                particles.userData.layerSpeed = 0.2 + layerIndex * 0.1;
-                group.add(particles);
-            });
 
             scene.add(group);
             return group;
         }
 
-        function createFastElastic(scene) {
-            const sphere = new THREE.Mesh(
-                new THREE.SphereGeometry(0.5, 32, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 1.0
-                })
-            );
-            sphere.userData.isPulsing = true;
-            sphere.userData.elastic = true;
-            sphere.userData.fastSpeed = true;
-            scene.add(sphere);
-            return sphere;
-        }
-
-        function createGentleElastic(scene) {
-            const sphere = new THREE.Mesh(
-                new THREE.SphereGeometry(0.5, 32, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 1.0
-                })
-            );
-            sphere.userData.isPulsing = true;
-            sphere.userData.elastic = true;
-            sphere.userData.gentle = true;
-            scene.add(sphere);
-            return sphere;
-        }
-
-        function createExtremeElastic(scene) {
-            const sphere = new THREE.Mesh(
-                new THREE.SphereGeometry(0.5, 32, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 1.0
-                })
-            );
-            sphere.userData.isPulsing = true;
-            sphere.userData.elastic = true;
-            sphere.userData.extreme = true;
-            scene.add(sphere);
-            return sphere;
-        }
-
-        function createDampedElastic(scene) {
-            const sphere = new THREE.Mesh(
-                new THREE.SphereGeometry(0.5, 32, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 1.0
-                })
-            );
-            sphere.userData.isPulsing = true;
-            sphere.userData.elastic = true;
-            sphere.userData.damped = true;
-            scene.add(sphere);
-            return sphere;
-        }
-
-        function createSpringElastic(scene) {
-            const sphere = new THREE.Mesh(
-                new THREE.SphereGeometry(0.5, 32, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 1.0
-                })
-            );
-            sphere.userData.isPulsing = true;
-            sphere.userData.elastic = true;
-            sphere.userData.spring = true;
-            scene.add(sphere);
-            return sphere;
-        }
-
-        function createHybridMasterpiece(scene) {
+        // S8: Slow Spin Sun
+        function createSlowSpinSun(scene) {
             const group = new THREE.Group();
 
-            // Core
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.35, 64, 64),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 3.0
-                })
-            );
-            core.userData.isCore = true;
-
-            // Halo
-            const halo = new THREE.Mesh(
-                new THREE.SphereGeometry(0.65, 32, 32),
-                new THREE.MeshBasicMaterial({
-                    color: 0xFF6B35,
-                    transparent: true,
-                    opacity: 0.2,
-                    blending: THREE.AdditiveBlending
-                })
-            );
-            halo.userData.isPulsing = true;
-            halo.userData.largeScale = true;
-
-            // Particle Shell
-            const particleCount = 120;
-            const geometry = new THREE.BufferGeometry();
-            const positions = new Float32Array(particleCount * 3);
-            for (let i = 0; i < particleCount; i++) {
-                const phi = Math.acos(2 * Math.random() - 1);
-                const theta = Math.random() * Math.PI * 2;
-                const radius = 0.5;
-                positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
-                positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-                positions[i * 3 + 2] = radius * Math.cos(phi);
-            }
-            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            const material = new THREE.PointsMaterial({
-                color: 0xFF6B35,
-                size: 0.06,
-                transparent: true,
-                opacity: 0.7,
-                blending: THREE.AdditiveBlending
-            });
-            const particles = new THREE.Points(geometry, material);
-            particles.userData.isParticles = true;
-
-            // Elastic shell
-            const elasticShell = new THREE.Mesh(
-                new THREE.SphereGeometry(0.4, 32, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    transparent: true,
-                    opacity: 0.3
-                })
-            );
-            elasticShell.userData.isPulsing = true;
-            elasticShell.userData.elastic = true;
-
-            group.add(core);
-            group.add(elasticShell);
-            group.add(particles);
-            group.add(halo);
-            scene.add(group);
-            return group;
-        }
-
-        // SET 4: Final polish variations
-        function createFastPulseHalo(scene) {
-            const group = new THREE.Group();
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.4, 64, 64),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 3.0
-                })
-            );
-            const halo = new THREE.Mesh(
-                new THREE.SphereGeometry(0.6, 32, 32),
-                new THREE.MeshBasicMaterial({
-                    color: 0xFF6B35,
-                    transparent: true,
-                    opacity: 0.2,
-                    blending: THREE.AdditiveBlending
-                })
-            );
-            core.userData.isCore = true;
-            halo.userData.isPulsing = true;
-            halo.userData.largeScale = true;
-            halo.userData.fastPulse = true;
-            group.add(core);
-            group.add(halo);
-            scene.add(group);
-            return group;
-        }
-
-        function createSlowBreathHalo(scene) {
-            const group = new THREE.Group();
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.4, 64, 64),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 3.0
-                })
-            );
-            const halo = new THREE.Mesh(
-                new THREE.SphereGeometry(0.6, 32, 32),
-                new THREE.MeshBasicMaterial({
-                    color: 0xFF6B35,
-                    transparent: true,
-                    opacity: 0.2,
-                    blending: THREE.AdditiveBlending
-                })
-            );
-            core.userData.isCore = true;
-            halo.userData.isPulsing = true;
-            halo.userData.breath = true;
-            group.add(core);
-            group.add(halo);
-            scene.add(group);
-            return group;
-        }
-
-        function createDoublePulseHalo(scene) {
-            const group = new THREE.Group();
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.4, 64, 64),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 3.0
-                })
-            );
-            core.userData.isCore = true;
-            core.userData.pulseDramatic = true;
-            const halo = new THREE.Mesh(
-                new THREE.SphereGeometry(0.6, 32, 32),
-                new THREE.MeshBasicMaterial({
-                    color: 0xFF6B35,
-                    transparent: true,
-                    opacity: 0.2,
-                    blending: THREE.AdditiveBlending
-                })
-            );
-            halo.userData.isPulsing = true;
-            halo.userData.largeScale = true;
-            group.add(core);
-            group.add(halo);
-            scene.add(group);
-            return group;
-        }
-
-        function createWarmGradient(scene) {
-            const group = new THREE.Group();
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.4, 64, 64),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 3.0
-                })
-            );
-            const canvas = document.createElement('canvas');
-            canvas.width = 256;
-            canvas.height = 256;
-            const ctx = canvas.getContext('2d');
-            const gradient = ctx.createRadialGradient(128, 128, 40, 128, 128, 128);
-            gradient.addColorStop(0, 'rgba(255, 107, 53, 0.7)');
-            gradient.addColorStop(0.4, 'rgba(255, 80, 80, 0.5)');
-            gradient.addColorStop(0.7, 'rgba(255, 150, 180, 0.3)');
-            gradient.addColorStop(1, 'rgba(255, 107, 53, 0)');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, 256, 256);
-            const texture = new THREE.CanvasTexture(canvas);
-            const halo = new THREE.Mesh(
-                new THREE.SphereGeometry(0.65, 32, 32),
-                new THREE.MeshBasicMaterial({
-                    map: texture,
-                    transparent: true,
-                    blending: THREE.AdditiveBlending
-                })
-            );
-            core.userData.isCore = true;
-            group.add(core);
-            group.add(halo);
-            scene.add(group);
-            return group;
-        }
-
-        function createCoolGradient(scene) {
-            const group = new THREE.Group();
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.4, 64, 64),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 3.0
-                })
-            );
-            const canvas = document.createElement('canvas');
-            canvas.width = 256;
-            canvas.height = 256;
-            const ctx = canvas.getContext('2d');
-            const gradient = ctx.createRadialGradient(128, 128, 40, 128, 128, 128);
-            gradient.addColorStop(0, 'rgba(255, 107, 53, 0.7)');
-            gradient.addColorStop(0.4, 'rgba(100, 180, 255, 0.5)');
-            gradient.addColorStop(0.7, 'rgba(0, 255, 255, 0.3)');
-            gradient.addColorStop(1, 'rgba(255, 107, 53, 0)');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, 256, 256);
-            const texture = new THREE.CanvasTexture(canvas);
-            const halo = new THREE.Mesh(
-                new THREE.SphereGeometry(0.65, 32, 32),
-                new THREE.MeshBasicMaterial({
-                    map: texture,
-                    transparent: true,
-                    blending: THREE.AdditiveBlending
-                })
-            );
-            core.userData.isCore = true;
-            group.add(core);
-            group.add(halo);
-            scene.add(group);
-            return group;
-        }
-
-        function createRainbowHalo(scene) {
-            const group = new THREE.Group();
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.4, 64, 64),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 3.0
-                })
-            );
-            const canvas = document.createElement('canvas');
-            canvas.width = 256;
-            canvas.height = 256;
-            const ctx = canvas.getContext('2d');
-            const gradient = ctx.createRadialGradient(128, 128, 40, 128, 128, 128);
-            gradient.addColorStop(0, 'rgba(255, 107, 53, 0.7)');
-            gradient.addColorStop(0.2, 'rgba(255, 200, 100, 0.6)');
-            gradient.addColorStop(0.4, 'rgba(100, 255, 100, 0.5)');
-            gradient.addColorStop(0.6, 'rgba(100, 200, 255, 0.4)');
-            gradient.addColorStop(0.8, 'rgba(200, 100, 255, 0.3)');
-            gradient.addColorStop(1, 'rgba(255, 107, 53, 0)');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, 256, 256);
-            const texture = new THREE.CanvasTexture(canvas);
-            const halo = new THREE.Mesh(
-                new THREE.SphereGeometry(0.65, 32, 32),
-                new THREE.MeshBasicMaterial({
-                    map: texture,
-                    transparent: true,
-                    blending: THREE.AdditiveBlending
-                })
-            );
-            core.userData.isCore = true;
-            group.add(core);
-            group.add(halo);
-            scene.add(group);
-            return group;
-        }
-
-        function createAnimatedGradient(scene) {
-            const group = new THREE.Group();
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.4, 64, 64),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 3.0
-                })
-            );
-            const canvas = document.createElement('canvas');
-            canvas.width = 256;
-            canvas.height = 256;
-            const ctx = canvas.getContext('2d');
-            const gradient = ctx.createRadialGradient(128, 128, 50, 128, 128, 128);
-            gradient.addColorStop(0, 'rgba(255, 107, 53, 0.6)');
-            gradient.addColorStop(0.5, 'rgba(255, 200, 100, 0.3)');
-            gradient.addColorStop(1, 'rgba(255, 107, 53, 0)');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, 256, 256);
-            const texture = new THREE.CanvasTexture(canvas);
-            const halo = new THREE.Mesh(
-                new THREE.SphereGeometry(0.65, 32, 32),
-                new THREE.MeshBasicMaterial({
-                    map: texture,
-                    transparent: true,
-                    blending: THREE.AdditiveBlending
-                })
-            );
-            halo.userData.rotatingHalo = true;
-            core.userData.isCore = true;
-            group.add(core);
-            group.add(halo);
-            scene.add(group);
-            return group;
-        }
-
-        function createPlasmaHalo(scene) {
-            const group = new THREE.Group();
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.4, 64, 64),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 3.0
-                })
-            );
-            const canvas = document.createElement('canvas');
-            canvas.width = 256;
-            canvas.height = 256;
-            const ctx = canvas.getContext('2d');
-            // Create plasma-like pattern
-            for (let x = 0; x < 256; x++) {
-                for (let y = 0; y < 256; y++) {
-                    const dx = x - 128;
-                    const dy = y - 128;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    const angle = Math.atan2(dy, dx);
-                    const value = Math.sin(dist * 0.05 + angle * 3);
-                    const alpha = Math.max(0, (1 - dist / 128) * 0.6);
+            const coreTexture = createPlasmaTexture(
+                (value) => {
                     const r = 255;
                     const g = Math.floor(107 + value * 100);
                     const b = Math.floor(53 + value * 50);
-                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
-                    ctx.fillRect(x, y, 1, 1);
-                }
-            }
-            const texture = new THREE.CanvasTexture(canvas);
-            const halo = new THREE.Mesh(
-                new THREE.SphereGeometry(0.65, 32, 32),
-                new THREE.MeshBasicMaterial({
-                    map: texture,
-                    transparent: true,
-                    blending: THREE.AdditiveBlending
-                })
+                    return `rgb(${r}, ${g}, ${b})`;
+                },
+                (dist, angle) => Math.sin(dist * 0.08 + angle * 4)
             );
-            halo.userData.rotatingHalo = true;
-            core.userData.isCore = true;
-            group.add(core);
-            group.add(halo);
-            scene.add(group);
-            return group;
-        }
-
-        function create4LayerShell(scene) {
-            const group = new THREE.Group();
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.3, 32, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 2.0
-                })
-            );
-            group.add(core);
-
-            // Four particle layers
-            [0.38, 0.46, 0.54, 0.62].forEach((radius, layerIndex) => {
-                const particleCount = 90 - layerIndex * 15;
-                const geometry = new THREE.BufferGeometry();
-                const positions = new Float32Array(particleCount * 3);
-                for (let i = 0; i < particleCount; i++) {
-                    const phi = Math.acos(2 * Math.random() - 1);
-                    const theta = Math.random() * Math.PI * 2;
-                    positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
-                    positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-                    positions[i * 3 + 2] = radius * Math.cos(phi);
-                }
-                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-                const material = new THREE.PointsMaterial({
-                    color: 0xFF6B35,
-                    size: 0.04 + layerIndex * 0.01,
-                    transparent: true,
-                    opacity: 0.9 - layerIndex * 0.15,
-                    blending: THREE.AdditiveBlending
-                });
-                const particles = new THREE.Points(geometry, material);
-                particles.userData.isParticles = true;
-                particles.userData.layerSpeed = 0.15 + layerIndex * 0.1;
-                group.add(particles);
-            });
-
-            scene.add(group);
-            return group;
-        }
-
-        function createReverseLayers(scene) {
-            const group = new THREE.Group();
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.3, 32, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 2.0
-                })
-            );
-            group.add(core);
-
-            [0.4, 0.5, 0.6].forEach((radius, layerIndex) => {
-                const particleCount = 80 - layerIndex * 20;
-                const geometry = new THREE.BufferGeometry();
-                const positions = new Float32Array(particleCount * 3);
-                for (let i = 0; i < particleCount; i++) {
-                    const phi = Math.acos(2 * Math.random() - 1);
-                    const theta = Math.random() * Math.PI * 2;
-                    positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
-                    positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-                    positions[i * 3 + 2] = radius * Math.cos(phi);
-                }
-                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-                const material = new THREE.PointsMaterial({
-                    color: 0xFF6B35,
-                    size: 0.05 + layerIndex * 0.01,
-                    transparent: true,
-                    opacity: 0.8 - layerIndex * 0.15,
-                    blending: THREE.AdditiveBlending
-                });
-                const particles = new THREE.Points(geometry, material);
-                particles.userData.isParticles = true;
-                // Alternating directions
-                particles.userData.layerSpeed = layerIndex % 2 === 0 ? 0.3 : -0.3;
-                group.add(particles);
-            });
-
-            scene.add(group);
-            return group;
-        }
-
-        function createPulsingLayers(scene) {
-            const group = new THREE.Group();
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.3, 32, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 2.0
-                })
-            );
-            group.add(core);
-
-            [0.4, 0.5, 0.6].forEach((radius, layerIndex) => {
-                const particleCount = 80 - layerIndex * 20;
-                const geometry = new THREE.BufferGeometry();
-                const positions = new Float32Array(particleCount * 3);
-                for (let i = 0; i < particleCount; i++) {
-                    const phi = Math.acos(2 * Math.random() - 1);
-                    const theta = Math.random() * Math.PI * 2;
-                    positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
-                    positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-                    positions[i * 3 + 2] = radius * Math.cos(phi);
-                }
-                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-                const material = new THREE.PointsMaterial({
-                    color: 0xFF6B35,
-                    size: 0.05 + layerIndex * 0.01,
-                    transparent: true,
-                    opacity: 0.8 - layerIndex * 0.15,
-                    blending: THREE.AdditiveBlending
-                });
-                const particles = new THREE.Points(geometry, material);
-                particles.userData.isParticles = true;
-                particles.userData.radialPulse = true;
-                particles.userData.layerSpeed = 0.2 + layerIndex * 0.1;
-                group.add(particles);
-            });
-
-            scene.add(group);
-            return group;
-        }
-
-        function createHybridV2(scene) {
-            const group = new THREE.Group();
 
             const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.35, 64, 64),
+                new THREE.SphereGeometry(0.4, 64, 64),
                 new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
+                    map: coreTexture,
                     emissive: 0xFF6B35,
-                    emissiveIntensity: 3.0
+                    emissiveIntensity: 2.5,
+                    emissiveMap: coreTexture
                 })
             );
             core.userData.isCore = true;
-
-            // Gradient halo (instead of solid)
-            const canvas = document.createElement('canvas');
-            canvas.width = 256;
-            canvas.height = 256;
-            const ctx = canvas.getContext('2d');
-            const gradient = ctx.createRadialGradient(128, 128, 50, 128, 128, 128);
-            gradient.addColorStop(0, 'rgba(255, 107, 53, 0.5)');
-            gradient.addColorStop(0.5, 'rgba(255, 200, 100, 0.3)');
-            gradient.addColorStop(1, 'rgba(255, 107, 53, 0)');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, 256, 256);
-            const texture = new THREE.CanvasTexture(canvas);
-            const halo = new THREE.Mesh(
-                new THREE.SphereGeometry(0.65, 32, 32),
-                new THREE.MeshBasicMaterial({
-                    map: texture,
-                    transparent: true,
-                    blending: THREE.AdditiveBlending
-                })
-            );
-            halo.userData.isPulsing = true;
-            halo.userData.largeScale = true;
-
-            const particleCount = 120;
-            const geometry = new THREE.BufferGeometry();
-            const positions = new Float32Array(particleCount * 3);
-            for (let i = 0; i < particleCount; i++) {
-                const phi = Math.acos(2 * Math.random() - 1);
-                const theta = Math.random() * Math.PI * 2;
-                const radius = 0.5;
-                positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
-                positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-                positions[i * 3 + 2] = radius * Math.cos(phi);
-            }
-            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            const material = new THREE.PointsMaterial({
-                color: 0xFF6B35,
-                size: 0.06,
-                transparent: true,
-                opacity: 0.7,
-                blending: THREE.AdditiveBlending
-            });
-            const particles = new THREE.Points(geometry, material);
-            particles.userData.isParticles = true;
-
-            const elasticShell = new THREE.Mesh(
-                new THREE.SphereGeometry(0.4, 32, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    transparent: true,
-                    opacity: 0.3
-                })
-            );
-            elasticShell.userData.isPulsing = true;
-            elasticShell.userData.elastic = true;
-
+            core.userData.rotSpeed = 0.2;
             group.add(core);
-            group.add(elasticShell);
-            group.add(particles);
-            group.add(halo);
-            scene.add(group);
-            return group;
-        }
-
-        function createHybridV3(scene) {
-            const group = new THREE.Group();
-
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.3, 64, 64),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 3.0
-                })
-            );
-            core.userData.isCore = true;
-            group.add(core);
-
-            // 4 particle layers
-            [0.38, 0.46, 0.54, 0.62].forEach((radius, layerIndex) => {
-                const particleCount = 80 - layerIndex * 15;
-                const geometry = new THREE.BufferGeometry();
-                const positions = new Float32Array(particleCount * 3);
-                for (let i = 0; i < particleCount; i++) {
-                    const phi = Math.acos(2 * Math.random() - 1);
-                    const theta = Math.random() * Math.PI * 2;
-                    positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
-                    positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-                    positions[i * 3 + 2] = radius * Math.cos(phi);
-                }
-                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-                const material = new THREE.PointsMaterial({
-                    color: 0xFF6B35,
-                    size: 0.04 + layerIndex * 0.01,
-                    transparent: true,
-                    opacity: 0.9 - layerIndex * 0.15,
-                    blending: THREE.AdditiveBlending
-                });
-                const particles = new THREE.Points(geometry, material);
-                particles.userData.isParticles = true;
-                particles.userData.layerSpeed = 0.15 + layerIndex * 0.1;
-                group.add(particles);
-            });
 
             const halo = new THREE.Mesh(
                 new THREE.SphereGeometry(0.7, 32, 32),
                 new THREE.MeshBasicMaterial({
                     color: 0xFF6B35,
                     transparent: true,
-                    opacity: 0.15,
-                    blending: THREE.AdditiveBlending
-                })
-            );
-            halo.userData.isPulsing = true;
-            halo.userData.largeScale = true;
-
-            const elasticShell = new THREE.Mesh(
-                new THREE.SphereGeometry(0.35, 32, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    transparent: true,
-                    opacity: 0.25
-                })
-            );
-            elasticShell.userData.isPulsing = true;
-            elasticShell.userData.elastic = true;
-
-            group.add(elasticShell);
-            group.add(halo);
-            scene.add(group);
-            return group;
-        }
-
-        function createHybridElite(scene) {
-            const group = new THREE.Group();
-
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.3, 64, 64),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 3.5
-                })
-            );
-            core.userData.isCore = true;
-            group.add(core);
-
-            // 4 particle layers
-            [0.38, 0.46, 0.54, 0.62].forEach((radius, layerIndex) => {
-                const particleCount = 80 - layerIndex * 15;
-                const geometry = new THREE.BufferGeometry();
-                const positions = new Float32Array(particleCount * 3);
-                for (let i = 0; i < particleCount; i++) {
-                    const phi = Math.acos(2 * Math.random() - 1);
-                    const theta = Math.random() * Math.PI * 2;
-                    positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
-                    positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-                    positions[i * 3 + 2] = radius * Math.cos(phi);
-                }
-                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-                const material = new THREE.PointsMaterial({
-                    color: 0xFF6B35,
-                    size: 0.04 + layerIndex * 0.01,
-                    transparent: true,
-                    opacity: 0.9 - layerIndex * 0.15,
-                    blending: THREE.AdditiveBlending
-                });
-                const particles = new THREE.Points(geometry, material);
-                particles.userData.isParticles = true;
-                particles.userData.layerSpeed = 0.15 + layerIndex * 0.1;
-                group.add(particles);
-            });
-
-            // Gradient halo
-            const canvas = document.createElement('canvas');
-            canvas.width = 256;
-            canvas.height = 256;
-            const ctx = canvas.getContext('2d');
-            const gradient = ctx.createRadialGradient(128, 128, 50, 128, 128, 128);
-            gradient.addColorStop(0, 'rgba(255, 107, 53, 0.5)');
-            gradient.addColorStop(0.5, 'rgba(255, 200, 100, 0.3)');
-            gradient.addColorStop(1, 'rgba(255, 107, 53, 0)');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, 256, 256);
-            const texture = new THREE.CanvasTexture(canvas);
-            const halo = new THREE.Mesh(
-                new THREE.SphereGeometry(0.7, 32, 32),
-                new THREE.MeshBasicMaterial({
-                    map: texture,
-                    transparent: true,
-                    blending: THREE.AdditiveBlending
-                })
-            );
-            halo.userData.isPulsing = true;
-            halo.userData.largeScale = true;
-
-            const elasticShell = new THREE.Mesh(
-                new THREE.SphereGeometry(0.35, 32, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    transparent: true,
-                    opacity: 0.25
-                })
-            );
-            elasticShell.userData.isPulsing = true;
-            elasticShell.userData.elastic = true;
-            elasticShell.userData.spring = true;
-
-            group.add(elasticShell);
-            group.add(halo);
-            scene.add(group);
-            return group;
-        }
-
-        function createHybridUltimate(scene) {
-            const group = new THREE.Group();
-
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.3, 64, 64),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 4.0
-                })
-            );
-            core.userData.isCore = true;
-            core.userData.pulseDramatic = true;
-            group.add(core);
-
-            // 4 particle layers with reverse rotation
-            [0.38, 0.46, 0.54, 0.62].forEach((radius, layerIndex) => {
-                const particleCount = 90 - layerIndex * 15;
-                const geometry = new THREE.BufferGeometry();
-                const positions = new Float32Array(particleCount * 3);
-                for (let i = 0; i < particleCount; i++) {
-                    const phi = Math.acos(2 * Math.random() - 1);
-                    const theta = Math.random() * Math.PI * 2;
-                    positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
-                    positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-                    positions[i * 3 + 2] = radius * Math.cos(phi);
-                }
-                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-                const material = new THREE.PointsMaterial({
-                    color: 0xFF6B35,
-                    size: 0.045 + layerIndex * 0.01,
-                    transparent: true,
-                    opacity: 0.95 - layerIndex * 0.15,
-                    blending: THREE.AdditiveBlending
-                });
-                const particles = new THREE.Points(geometry, material);
-                particles.userData.isParticles = true;
-                particles.userData.layerSpeed = layerIndex % 2 === 0 ? 0.25 : -0.25;
-                group.add(particles);
-            });
-
-            // Gradient halo with animation
-            const canvas = document.createElement('canvas');
-            canvas.width = 256;
-            canvas.height = 256;
-            const ctx = canvas.getContext('2d');
-            const gradient = ctx.createRadialGradient(128, 128, 45, 128, 128, 128);
-            gradient.addColorStop(0, 'rgba(255, 107, 53, 0.6)');
-            gradient.addColorStop(0.3, 'rgba(255, 150, 80, 0.4)');
-            gradient.addColorStop(0.6, 'rgba(255, 200, 120, 0.2)');
-            gradient.addColorStop(1, 'rgba(255, 107, 53, 0)');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, 256, 256);
-            const texture = new THREE.CanvasTexture(canvas);
-            const halo = new THREE.Mesh(
-                new THREE.SphereGeometry(0.75, 32, 32),
-                new THREE.MeshBasicMaterial({
-                    map: texture,
-                    transparent: true,
-                    blending: THREE.AdditiveBlending
-                })
-            );
-            halo.userData.isPulsing = true;
-            halo.userData.largeScale = true;
-            halo.userData.rotatingHalo = true;
-
-            const elasticShell = new THREE.Mesh(
-                new THREE.SphereGeometry(0.35, 32, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    transparent: true,
-                    opacity: 0.3
-                })
-            );
-            elasticShell.userData.isPulsing = true;
-            elasticShell.userData.elastic = true;
-            elasticShell.userData.spring = true;
-
-            group.add(elasticShell);
-            group.add(halo);
-            scene.add(group);
-            return group;
-        }
-
-        function createTheOne(scene) {
-            const group = new THREE.Group();
-
-            // Perfect core
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.32, 64, 64),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 3.5
-                })
-            );
-            core.userData.isCore = true;
-            core.userData.pulseDramatic = true;
-            group.add(core);
-
-            // Optimal particle layers (3 layers, balanced)
-            [0.42, 0.52, 0.62].forEach((radius, layerIndex) => {
-                const particleCount = 85 - layerIndex * 20;
-                const geometry = new THREE.BufferGeometry();
-                const positions = new Float32Array(particleCount * 3);
-                for (let i = 0; i < particleCount; i++) {
-                    const phi = Math.acos(2 * Math.random() - 1);
-                    const theta = Math.random() * Math.PI * 2;
-                    positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
-                    positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-                    positions[i * 3 + 2] = radius * Math.cos(phi);
-                }
-                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-                const material = new THREE.PointsMaterial({
-                    color: 0xFF6B35,
-                    size: 0.05 + layerIndex * 0.008,
-                    transparent: true,
-                    opacity: 0.88 - layerIndex * 0.12,
-                    blending: THREE.AdditiveBlending
-                });
-                const particles = new THREE.Points(geometry, material);
-                particles.userData.isParticles = true;
-                particles.userData.layerSpeed = layerIndex % 2 === 0 ? 0.22 : -0.18;
-                group.add(particles);
-            });
-
-            // Perfect gradient halo
-            const canvas = document.createElement('canvas');
-            canvas.width = 256;
-            canvas.height = 256;
-            const ctx = canvas.getContext('2d');
-            const gradient = ctx.createRadialGradient(128, 128, 48, 128, 128, 128);
-            gradient.addColorStop(0, 'rgba(255, 107, 53, 0.55)');
-            gradient.addColorStop(0.35, 'rgba(255, 170, 90, 0.35)');
-            gradient.addColorStop(0.65, 'rgba(255, 200, 130, 0.18)');
-            gradient.addColorStop(1, 'rgba(255, 107, 53, 0)');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, 256, 256);
-            const texture = new THREE.CanvasTexture(canvas);
-            const halo = new THREE.Mesh(
-                new THREE.SphereGeometry(0.72, 32, 32),
-                new THREE.MeshBasicMaterial({
-                    map: texture,
-                    transparent: true,
-                    blending: THREE.AdditiveBlending
-                })
-            );
-            halo.userData.isPulsing = true;
-            halo.userData.largeScale = true;
-
-            // Subtle elastic shell
-            const elasticShell = new THREE.Mesh(
-                new THREE.SphereGeometry(0.38, 32, 32),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    transparent: true,
-                    opacity: 0.28
-                })
-            );
-            elasticShell.userData.isPulsing = true;
-            elasticShell.userData.elastic = true;
-            elasticShell.userData.gentle = true;
-
-            group.add(elasticShell);
-            group.add(halo);
-            scene.add(group);
-            return group;
-        }
-
-        // ======== SET 5: PLASMA MASTERY FUNCTIONS ========
-
-        // P1: Classic Plasma (original A5-5)
-        function createClassicPlasma(scene) {
-            const group = new THREE.Group();
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.35, 64, 64),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 3.0
-                })
-            );
-            core.userData.isCore = true;
-            group.add(core);
-
-            const canvas = document.createElement('canvas');
-            canvas.width = 256;
-            canvas.height = 256;
-            const ctx = canvas.getContext('2d');
-            for (let x = 0; x < 256; x++) {
-                for (let y = 0; y < 256; y++) {
-                    const dx = x - 128;
-                    const dy = y - 128;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    const angle = Math.atan2(dy, dx);
-                    const value = Math.sin(dist * 0.05 + angle * 3);
-                    const alpha = Math.max(0, (1 - dist / 128) * 0.6);
-                    const r = 255;
-                    const g = Math.floor(107 + value * 100);
-                    const b = Math.floor(53 + value * 50);
-                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
-                    ctx.fillRect(x, y, 1, 1);
-                }
-            }
-            const texture = new THREE.CanvasTexture(canvas);
-            const halo = new THREE.Mesh(
-                new THREE.SphereGeometry(0.7, 32, 32),
-                new THREE.MeshBasicMaterial({
-                    map: texture,
-                    transparent: true,
+                    opacity: 0.3,
                     blending: THREE.AdditiveBlending
                 })
             );
             group.add(halo);
+
             scene.add(group);
             return group;
         }
 
-        // P2: Fire Plasma (red→orange→yellow)
-        function createFirePlasma(scene) {
+        // S9: Turbulent Sun
+        function createTurbulentSun(scene) {
             const group = new THREE.Group();
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.35, 64, 64),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF3300,
-                    emissive: 0xFF3300,
-                    emissiveIntensity: 3.2
-                })
-            );
-            core.userData.isCore = true;
-            group.add(core);
 
-            const canvas = document.createElement('canvas');
-            canvas.width = 256;
-            canvas.height = 256;
-            const ctx = canvas.getContext('2d');
-            for (let x = 0; x < 256; x++) {
-                for (let y = 0; y < 256; y++) {
-                    const dx = x - 128;
-                    const dy = y - 128;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    const angle = Math.atan2(dy, dx);
-                    const value = Math.sin(dist * 0.05 + angle * 3);
-                    const alpha = Math.max(0, (1 - dist / 128) * 0.65);
-                    const r = 255;
-                    const g = Math.floor(51 + value * 150); // 51-200 range (orange-yellow)
-                    const b = Math.floor(value * 50); // 0-50 range
-                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
-                    ctx.fillRect(x, y, 1, 1);
-                }
-            }
-            const texture = new THREE.CanvasTexture(canvas);
-            const halo = new THREE.Mesh(
-                new THREE.SphereGeometry(0.7, 32, 32),
-                new THREE.MeshBasicMaterial({
-                    map: texture,
-                    transparent: true,
-                    blending: THREE.AdditiveBlending
-                })
-            );
-            group.add(halo);
-            scene.add(group);
-            return group;
-        }
-
-        // P3: Cool Plasma (blue→cyan→white)
-        function createCoolPlasma(scene) {
-            const group = new THREE.Group();
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.35, 64, 64),
-                new THREE.MeshStandardMaterial({
-                    color: 0x00D9FF,
-                    emissive: 0x00D9FF,
-                    emissiveIntensity: 3.0
-                })
-            );
-            core.userData.isCore = true;
-            group.add(core);
-
-            const canvas = document.createElement('canvas');
-            canvas.width = 256;
-            canvas.height = 256;
-            const ctx = canvas.getContext('2d');
-            for (let x = 0; x < 256; x++) {
-                for (let y = 0; y < 256; y++) {
-                    const dx = x - 128;
-                    const dy = y - 128;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    const angle = Math.atan2(dy, dx);
-                    const value = Math.sin(dist * 0.05 + angle * 3);
-                    const alpha = Math.max(0, (1 - dist / 128) * 0.6);
-                    const r = Math.floor(value * 100 + 100); // 100-200
-                    const g = Math.floor(217 + value * 38); // 217-255
-                    const b = 255;
-                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
-                    ctx.fillRect(x, y, 1, 1);
-                }
-            }
-            const texture = new THREE.CanvasTexture(canvas);
-            const halo = new THREE.Mesh(
-                new THREE.SphereGeometry(0.7, 32, 32),
-                new THREE.MeshBasicMaterial({
-                    map: texture,
-                    transparent: true,
-                    blending: THREE.AdditiveBlending
-                })
-            );
-            group.add(halo);
-            scene.add(group);
-            return group;
-        }
-
-        // P4: Toxic Plasma (green→lime→yellow)
-        function createToxicPlasma(scene) {
-            const group = new THREE.Group();
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.35, 64, 64),
-                new THREE.MeshStandardMaterial({
-                    color: 0x00FF00,
-                    emissive: 0x00FF00,
-                    emissiveIntensity: 3.0
-                })
-            );
-            core.userData.isCore = true;
-            group.add(core);
-
-            const canvas = document.createElement('canvas');
-            canvas.width = 256;
-            canvas.height = 256;
-            const ctx = canvas.getContext('2d');
-            for (let x = 0; x < 256; x++) {
-                for (let y = 0; y < 256; y++) {
-                    const dx = x - 128;
-                    const dy = y - 128;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    const angle = Math.atan2(dy, dx);
-                    const value = Math.sin(dist * 0.05 + angle * 3);
-                    const alpha = Math.max(0, (1 - dist / 128) * 0.6);
-                    const r = Math.floor(value * 100 + 100); // 100-200
-                    const g = 255;
-                    const b = Math.floor(value * 50); // 0-50
-                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
-                    ctx.fillRect(x, y, 1, 1);
-                }
-            }
-            const texture = new THREE.CanvasTexture(canvas);
-            const halo = new THREE.Mesh(
-                new THREE.SphereGeometry(0.7, 32, 32),
-                new THREE.MeshBasicMaterial({
-                    map: texture,
-                    transparent: true,
-                    blending: THREE.AdditiveBlending
-                })
-            );
-            group.add(halo);
-            scene.add(group);
-            return group;
-        }
-
-        // P5: Turbulent Plasma (chaotic multi-wave)
-        function createTurbulentPlasma(scene) {
-            const group = new THREE.Group();
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.35, 64, 64),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 3.0
-                })
-            );
-            core.userData.isCore = true;
-            group.add(core);
-
-            const canvas = document.createElement('canvas');
-            canvas.width = 256;
-            canvas.height = 256;
-            const ctx = canvas.getContext('2d');
-            for (let x = 0; x < 256; x++) {
-                for (let y = 0; y < 256; y++) {
-                    const dx = x - 128;
-                    const dy = y - 128;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    const angle = Math.atan2(dy, dx);
-                    // Multiple interfering waves
-                    const value = (Math.sin(dist * 0.08 + angle * 2) +
-                                   Math.sin(dist * 0.03 - angle * 4) +
-                                   Math.cos(dist * 0.05 + angle * 3)) / 3;
-                    const alpha = Math.max(0, (1 - dist / 128) * 0.7);
+            const coreTexture = createPlasmaTexture(
+                (value) => {
                     const r = 255;
                     const g = Math.floor(107 + value * 120);
                     const b = Math.floor(53 + value * 80);
-                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
-                    ctx.fillRect(x, y, 1, 1);
-                }
-            }
-            const texture = new THREE.CanvasTexture(canvas);
+                    return `rgb(${r}, ${g}, ${b})`;
+                },
+                (dist, angle) => (Math.sin(dist * 0.08 + angle * 2) + Math.sin(dist * 0.03 - angle * 4) + Math.cos(dist * 0.05 + angle * 3)) / 3
+            );
+
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.4, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    map: coreTexture,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 2.5,
+                    emissiveMap: coreTexture
+                })
+            );
+            core.userData.isCore = true;
+            core.userData.rotSpeed = 0.5;
+            group.add(core);
+
             const halo = new THREE.Mesh(
                 new THREE.SphereGeometry(0.7, 32, 32),
                 new THREE.MeshBasicMaterial({
-                    map: texture,
+                    color: 0xFF6B35,
                     transparent: true,
+                    opacity: 0.3,
                     blending: THREE.AdditiveBlending
                 })
             );
             group.add(halo);
+
             scene.add(group);
             return group;
         }
 
-        // P6: Ripple Plasma (concentric circles)
-        function createRipplePlasma(scene) {
+        // S10: Ripple Sun
+        function createRippleSun(scene) {
             const group = new THREE.Group();
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.35, 64, 64),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 3.0
-                })
-            );
-            core.userData.isCore = true;
-            group.add(core);
 
-            const canvas = document.createElement('canvas');
-            canvas.width = 256;
-            canvas.height = 256;
-            const ctx = canvas.getContext('2d');
-            for (let x = 0; x < 256; x++) {
-                for (let y = 0; y < 256; y++) {
-                    const dx = x - 128;
-                    const dy = y - 128;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    // Pure ripple effect (distance-only)
-                    const value = Math.sin(dist * 0.15);
-                    const alpha = Math.max(0, (1 - dist / 128) * 0.6);
+            const coreTexture = createPlasmaTexture(
+                (value) => {
                     const r = 255;
                     const g = Math.floor(107 + value * 100);
                     const b = Math.floor(53 + value * 50);
-                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
-                    ctx.fillRect(x, y, 1, 1);
-                }
-            }
-            const texture = new THREE.CanvasTexture(canvas);
+                    return `rgb(${r}, ${g}, ${b})`;
+                },
+                (dist, angle) => Math.sin(dist * 0.15)
+            );
+
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.4, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    map: coreTexture,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 2.5,
+                    emissiveMap: coreTexture
+                })
+            );
+            core.userData.isCore = true;
+            core.userData.rotSpeed = 0.5;
+            group.add(core);
+
             const halo = new THREE.Mesh(
                 new THREE.SphereGeometry(0.7, 32, 32),
                 new THREE.MeshBasicMaterial({
-                    map: texture,
+                    color: 0xFF6B35,
                     transparent: true,
+                    opacity: 0.3,
                     blending: THREE.AdditiveBlending
                 })
             );
             group.add(halo);
+
             scene.add(group);
             return group;
         }
 
-        // P7: Spiral Plasma (angle-based)
-        function createSpiralPlasma(scene) {
+        // S11: Spiral Sun
+        function createSpiralSun(scene) {
             const group = new THREE.Group();
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.35, 64, 64),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 3.0
-                })
-            );
-            core.userData.isCore = true;
-            group.add(core);
 
-            const canvas = document.createElement('canvas');
-            canvas.width = 256;
-            canvas.height = 256;
-            const ctx = canvas.getContext('2d');
-            for (let x = 0; x < 256; x++) {
-                for (let y = 0; y < 256; y++) {
-                    const dx = x - 128;
-                    const dy = y - 128;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    const angle = Math.atan2(dy, dx);
-                    // Spiral pattern (angle + distance interaction)
-                    const value = Math.sin(angle * 5 + dist * 0.1);
-                    const alpha = Math.max(0, (1 - dist / 128) * 0.6);
+            const coreTexture = createPlasmaTexture(
+                (value) => {
                     const r = 255;
                     const g = Math.floor(107 + value * 100);
                     const b = Math.floor(53 + value * 50);
-                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
-                    ctx.fillRect(x, y, 1, 1);
-                }
-            }
-            const texture = new THREE.CanvasTexture(canvas);
+                    return `rgb(${r}, ${g}, ${b})`;
+                },
+                (dist, angle) => Math.sin(angle * 5 + dist * 0.1)
+            );
+
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.4, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    map: coreTexture,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 2.5,
+                    emissiveMap: coreTexture
+                })
+            );
+            core.userData.isCore = true;
+            core.userData.rotSpeed = 0.5;
+            group.add(core);
+
             const halo = new THREE.Mesh(
                 new THREE.SphereGeometry(0.7, 32, 32),
                 new THREE.MeshBasicMaterial({
-                    map: texture,
+                    color: 0xFF6B35,
                     transparent: true,
+                    opacity: 0.3,
                     blending: THREE.AdditiveBlending
                 })
             );
             group.add(halo);
+
             scene.add(group);
             return group;
         }
 
-        // P8: Cellular Plasma (voronoi-like cells)
-        function createCellularPlasma(scene) {
+        // S12: Cellular Sun
+        function createCellularSun(scene) {
             const group = new THREE.Group();
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.35, 64, 64),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 3.0
-                })
-            );
-            core.userData.isCore = true;
-            group.add(core);
 
-            // Generate random cell centers
+            // Generate cell centers
             const cellCenters = [];
             for (let i = 0; i < 12; i++) {
                 cellCenters.push({
@@ -2775,13 +671,9 @@
             canvas.width = 256;
             canvas.height = 256;
             const ctx = canvas.getContext('2d');
+
             for (let x = 0; x < 256; x++) {
                 for (let y = 0; y < 256; y++) {
-                    const dx = x - 128;
-                    const dy = y - 128;
-                    const centerDist = Math.sqrt(dx * dx + dy * dy);
-
-                    // Find nearest cell center
                     let minDist = Infinity;
                     for (const center of cellCenters) {
                         const cdx = x - center.x;
@@ -2789,462 +681,7 @@
                         const dist = Math.sqrt(cdx * cdx + cdy * cdy);
                         minDist = Math.min(minDist, dist);
                     }
-
                     const value = Math.sin(minDist * 0.1);
-                    const alpha = Math.max(0, (1 - centerDist / 128) * 0.6);
-                    const r = 255;
-                    const g = Math.floor(107 + value * 100);
-                    const b = Math.floor(53 + value * 50);
-                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
-                    ctx.fillRect(x, y, 1, 1);
-                }
-            }
-            const texture = new THREE.CanvasTexture(canvas);
-            const halo = new THREE.Mesh(
-                new THREE.SphereGeometry(0.7, 32, 32),
-                new THREE.MeshBasicMaterial({
-                    map: texture,
-                    transparent: true,
-                    blending: THREE.AdditiveBlending
-                })
-            );
-            group.add(halo);
-            scene.add(group);
-            return group;
-        }
-
-        // P9: Flowing Plasma (time-animated)
-        function createFlowingPlasma(scene) {
-            const group = new THREE.Group();
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.35, 64, 64),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 3.0
-                })
-            );
-            core.userData.isCore = true;
-            group.add(core);
-
-            const canvas = document.createElement('canvas');
-            canvas.width = 256;
-            canvas.height = 256;
-            const ctx = canvas.getContext('2d');
-            for (let x = 0; x < 256; x++) {
-                for (let y = 0; y < 256; y++) {
-                    const dx = x - 128;
-                    const dy = y - 128;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    const angle = Math.atan2(dy, dx);
-                    const value = Math.sin(dist * 0.05 + angle * 3);
-                    const alpha = Math.max(0, (1 - dist / 128) * 0.6);
-                    const r = 255;
-                    const g = Math.floor(107 + value * 100);
-                    const b = Math.floor(53 + value * 50);
-                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
-                    ctx.fillRect(x, y, 1, 1);
-                }
-            }
-            const texture = new THREE.CanvasTexture(canvas);
-            const halo = new THREE.Mesh(
-                new THREE.SphereGeometry(0.7, 32, 32),
-                new THREE.MeshBasicMaterial({
-                    map: texture,
-                    transparent: true,
-                    blending: THREE.AdditiveBlending
-                })
-            );
-            halo.userData.flowingPlasma = true; // Animation flag
-            group.add(halo);
-            scene.add(group);
-            return group;
-        }
-
-        // P10: Breathing Plasma (pulsing)
-        function createBreathingPlasma(scene) {
-            const group = new THREE.Group();
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.35, 64, 64),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 3.0
-                })
-            );
-            core.userData.isCore = true;
-            core.userData.pulseDramatic = true;
-            group.add(core);
-
-            const canvas = document.createElement('canvas');
-            canvas.width = 256;
-            canvas.height = 256;
-            const ctx = canvas.getContext('2d');
-            for (let x = 0; x < 256; x++) {
-                for (let y = 0; y < 256; y++) {
-                    const dx = x - 128;
-                    const dy = y - 128;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    const angle = Math.atan2(dy, dx);
-                    const value = Math.sin(dist * 0.05 + angle * 3);
-                    const alpha = Math.max(0, (1 - dist / 128) * 0.6);
-                    const r = 255;
-                    const g = Math.floor(107 + value * 100);
-                    const b = Math.floor(53 + value * 50);
-                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
-                    ctx.fillRect(x, y, 1, 1);
-                }
-            }
-            const texture = new THREE.CanvasTexture(canvas);
-            const halo = new THREE.Mesh(
-                new THREE.SphereGeometry(0.7, 32, 32),
-                new THREE.MeshBasicMaterial({
-                    map: texture,
-                    transparent: true,
-                    blending: THREE.AdditiveBlending
-                })
-            );
-            halo.userData.isPulsing = true;
-            halo.userData.largeScale = true;
-            group.add(halo);
-            scene.add(group);
-            return group;
-        }
-
-        // P11: Spinning Plasma (rotating)
-        function createSpinningPlasma(scene) {
-            const group = new THREE.Group();
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.35, 64, 64),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 3.0
-                })
-            );
-            core.userData.isCore = true;
-            group.add(core);
-
-            const canvas = document.createElement('canvas');
-            canvas.width = 256;
-            canvas.height = 256;
-            const ctx = canvas.getContext('2d');
-            for (let x = 0; x < 256; x++) {
-                for (let y = 0; y < 256; y++) {
-                    const dx = x - 128;
-                    const dy = y - 128;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    const angle = Math.atan2(dy, dx);
-                    const value = Math.sin(dist * 0.05 + angle * 3);
-                    const alpha = Math.max(0, (1 - dist / 128) * 0.6);
-                    const r = 255;
-                    const g = Math.floor(107 + value * 100);
-                    const b = Math.floor(53 + value * 50);
-                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
-                    ctx.fillRect(x, y, 1, 1);
-                }
-            }
-            const texture = new THREE.CanvasTexture(canvas);
-            const halo = new THREE.Mesh(
-                new THREE.SphereGeometry(0.7, 32, 32),
-                new THREE.MeshBasicMaterial({
-                    map: texture,
-                    transparent: true,
-                    blending: THREE.AdditiveBlending
-                })
-            );
-            halo.userData.rotatingHalo = true;
-            group.add(halo);
-            scene.add(group);
-            return group;
-        }
-
-        // P12: Morphing Plasma (time-evolving)
-        function createMorphingPlasma(scene) {
-            const group = new THREE.Group();
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.35, 64, 64),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 3.0
-                })
-            );
-            core.userData.isCore = true;
-            group.add(core);
-
-            const canvas = document.createElement('canvas');
-            canvas.width = 256;
-            canvas.height = 256;
-            const ctx = canvas.getContext('2d');
-            for (let x = 0; x < 256; x++) {
-                for (let y = 0; y < 256; y++) {
-                    const dx = x - 128;
-                    const dy = y - 128;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    const angle = Math.atan2(dy, dx);
-                    const value = Math.sin(dist * 0.05 + angle * 3);
-                    const alpha = Math.max(0, (1 - dist / 128) * 0.6);
-                    const r = 255;
-                    const g = Math.floor(107 + value * 100);
-                    const b = Math.floor(53 + value * 50);
-                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
-                    ctx.fillRect(x, y, 1, 1);
-                }
-            }
-            const texture = new THREE.CanvasTexture(canvas);
-            const halo = new THREE.Mesh(
-                new THREE.SphereGeometry(0.7, 32, 32),
-                new THREE.MeshBasicMaterial({
-                    map: texture,
-                    transparent: true,
-                    blending: THREE.AdditiveBlending
-                })
-            );
-            halo.userData.morphingPlasma = true; // Animation flag
-            group.add(halo);
-            scene.add(group);
-            return group;
-        }
-
-        // P13: Plasma + Particles
-        function createPlasmaParticles(scene) {
-            const group = new THREE.Group();
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.3, 64, 64),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 3.0
-                })
-            );
-            core.userData.isCore = true;
-            group.add(core);
-
-            // Plasma halo
-            const canvas = document.createElement('canvas');
-            canvas.width = 256;
-            canvas.height = 256;
-            const ctx = canvas.getContext('2d');
-            for (let x = 0; x < 256; x++) {
-                for (let y = 0; y < 256; y++) {
-                    const dx = x - 128;
-                    const dy = y - 128;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    const angle = Math.atan2(dy, dx);
-                    const value = Math.sin(dist * 0.05 + angle * 3);
-                    const alpha = Math.max(0, (1 - dist / 128) * 0.5);
-                    const r = 255;
-                    const g = Math.floor(107 + value * 100);
-                    const b = Math.floor(53 + value * 50);
-                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
-                    ctx.fillRect(x, y, 1, 1);
-                }
-            }
-            const texture = new THREE.CanvasTexture(canvas);
-            const halo = new THREE.Mesh(
-                new THREE.SphereGeometry(0.7, 32, 32),
-                new THREE.MeshBasicMaterial({
-                    map: texture,
-                    transparent: true,
-                    blending: THREE.AdditiveBlending
-                })
-            );
-            group.add(halo);
-
-            // Particle shell
-            const particleCount = 100;
-            const geometry = new THREE.BufferGeometry();
-            const positions = new Float32Array(particleCount * 3);
-            for (let i = 0; i < particleCount; i++) {
-                const phi = Math.acos(2 * Math.random() - 1);
-                const theta = Math.random() * Math.PI * 2;
-                const radius = 0.5;
-                positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
-                positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-                positions[i * 3 + 2] = radius * Math.cos(phi);
-            }
-            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            const material = new THREE.PointsMaterial({
-                color: 0xFF6B35,
-                size: 0.04,
-                transparent: true,
-                opacity: 0.7,
-                blending: THREE.AdditiveBlending
-            });
-            const particles = new THREE.Points(geometry, material);
-            particles.userData.isParticles = true;
-            particles.userData.rotating = true;
-            group.add(particles);
-
-            scene.add(group);
-            return group;
-        }
-
-        // P14: Plasma + Ring
-        function createPlasmaRing(scene) {
-            const group = new THREE.Group();
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.35, 64, 64),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 3.0
-                })
-            );
-            core.userData.isCore = true;
-            group.add(core);
-
-            // Plasma halo
-            const canvas = document.createElement('canvas');
-            canvas.width = 256;
-            canvas.height = 256;
-            const ctx = canvas.getContext('2d');
-            for (let x = 0; x < 256; x++) {
-                for (let y = 0; y < 256; y++) {
-                    const dx = x - 128;
-                    const dy = y - 128;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    const angle = Math.atan2(dy, dx);
-                    const value = Math.sin(dist * 0.05 + angle * 3);
-                    const alpha = Math.max(0, (1 - dist / 128) * 0.6);
-                    const r = 255;
-                    const g = Math.floor(107 + value * 100);
-                    const b = Math.floor(53 + value * 50);
-                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
-                    ctx.fillRect(x, y, 1, 1);
-                }
-            }
-            const texture = new THREE.CanvasTexture(canvas);
-            const halo = new THREE.Mesh(
-                new THREE.SphereGeometry(0.65, 32, 32),
-                new THREE.MeshBasicMaterial({
-                    map: texture,
-                    transparent: true,
-                    blending: THREE.AdditiveBlending
-                })
-            );
-            group.add(halo);
-
-            // Rotating ring
-            const ring = new THREE.Mesh(
-                new THREE.RingGeometry(0.55, 0.75, 32),
-                new THREE.MeshBasicMaterial({
-                    color: 0xFF6B35,
-                    transparent: true,
-                    opacity: 0.4,
-                    side: THREE.DoubleSide,
-                    blending: THREE.AdditiveBlending
-                })
-            );
-            ring.rotation.x = Math.PI / 2;
-            ring.userData.isRing = true;
-            group.add(ring);
-
-            scene.add(group);
-            return group;
-        }
-
-        // P15: Dual Plasma (two layers)
-        function createDualPlasma(scene) {
-            const group = new THREE.Group();
-            const core = new THREE.Mesh(
-                new THREE.SphereGeometry(0.3, 64, 64),
-                new THREE.MeshStandardMaterial({
-                    color: 0xFF6B35,
-                    emissive: 0xFF6B35,
-                    emissiveIntensity: 3.5
-                })
-            );
-            core.userData.isCore = true;
-            group.add(core);
-
-            // Inner plasma layer
-            const canvas1 = document.createElement('canvas');
-            canvas1.width = 256;
-            canvas1.height = 256;
-            const ctx1 = canvas1.getContext('2d');
-            for (let x = 0; x < 256; x++) {
-                for (let y = 0; y < 256; y++) {
-                    const dx = x - 128;
-                    const dy = y - 128;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    const angle = Math.atan2(dy, dx);
-                    const value = Math.sin(dist * 0.05 + angle * 3);
-                    const alpha = Math.max(0, (1 - dist / 128) * 0.5);
-                    const r = 255;
-                    const g = Math.floor(107 + value * 100);
-                    const b = Math.floor(53 + value * 50);
-                    ctx1.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
-                    ctx1.fillRect(x, y, 1, 1);
-                }
-            }
-            const texture1 = new THREE.CanvasTexture(canvas1);
-            const halo1 = new THREE.Mesh(
-                new THREE.SphereGeometry(0.5, 32, 32),
-                new THREE.MeshBasicMaterial({
-                    map: texture1,
-                    transparent: true,
-                    blending: THREE.AdditiveBlending
-                })
-            );
-            halo1.userData.rotatingHalo = true;
-            group.add(halo1);
-
-            // Outer plasma layer (different pattern)
-            const canvas2 = document.createElement('canvas');
-            canvas2.width = 256;
-            canvas2.height = 256;
-            const ctx2 = canvas2.getContext('2d');
-            for (let x = 0; x < 256; x++) {
-                for (let y = 0; y < 256; y++) {
-                    const dx = x - 128;
-                    const dy = y - 128;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    const angle = Math.atan2(dy, dx);
-                    // Different pattern: spiral
-                    const value = Math.sin(angle * 5 + dist * 0.1);
-                    const alpha = Math.max(0, (1 - dist / 128) * 0.4);
-                    const r = 255;
-                    const g = Math.floor(107 + value * 100);
-                    const b = Math.floor(53 + value * 50);
-                    ctx2.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
-                    ctx2.fillRect(x, y, 1, 1);
-                }
-            }
-            const texture2 = new THREE.CanvasTexture(canvas2);
-            const halo2 = new THREE.Mesh(
-                new THREE.SphereGeometry(0.75, 32, 32),
-                new THREE.MeshBasicMaterial({
-                    map: texture2,
-                    transparent: true,
-                    blending: THREE.AdditiveBlending
-                })
-            );
-            halo2.userData.rotatingHalo = true;
-            halo2.userData.reverseRotation = true;
-            group.add(halo2);
-
-            scene.add(group);
-            return group;
-        }
-
-        // P16: Plasma Core (plasma on core itself)
-        function createPlasmaCore(scene) {
-            const group = new THREE.Group();
-
-            // Plasma-textured core
-            const canvas = document.createElement('canvas');
-            canvas.width = 256;
-            canvas.height = 256;
-            const ctx = canvas.getContext('2d');
-            for (let x = 0; x < 256; x++) {
-                for (let y = 0; y < 256; y++) {
-                    const dx = x - 128;
-                    const dy = y - 128;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    const angle = Math.atan2(dy, dx);
-                    const value = Math.sin(dist * 0.08 + angle * 4);
                     const r = 255;
                     const g = Math.floor(107 + value * 100);
                     const b = Math.floor(53 + value * 50);
@@ -3253,6 +690,7 @@
                 }
             }
             const coreTexture = new THREE.CanvasTexture(canvas);
+
             const core = new THREE.Mesh(
                 new THREE.SphereGeometry(0.4, 64, 64),
                 new THREE.MeshStandardMaterial({
@@ -3263,38 +701,216 @@
                 })
             );
             core.userData.isCore = true;
-            core.userData.rotatingCore = true;
+            core.userData.rotSpeed = 0.5;
             group.add(core);
 
-            // Outer plasma halo
-            const canvas2 = document.createElement('canvas');
-            canvas2.width = 256;
-            canvas2.height = 256;
-            const ctx2 = canvas2.getContext('2d');
-            for (let x = 0; x < 256; x++) {
-                for (let y = 0; y < 256; y++) {
-                    const dx = x - 128;
-                    const dy = y - 128;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    const angle = Math.atan2(dy, dx);
-                    const value = Math.sin(dist * 0.05 + angle * 3);
-                    const alpha = Math.max(0, (1 - dist / 128) * 0.5);
-                    const r = 255;
-                    const g = Math.floor(107 + value * 100);
-                    const b = Math.floor(53 + value * 50);
-                    ctx2.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
-                    ctx2.fillRect(x, y, 1, 1);
-                }
-            }
-            const texture2 = new THREE.CanvasTexture(canvas2);
             const halo = new THREE.Mesh(
                 new THREE.SphereGeometry(0.7, 32, 32),
                 new THREE.MeshBasicMaterial({
-                    map: texture2,
+                    color: 0xFF6B35,
                     transparent: true,
+                    opacity: 0.3,
                     blending: THREE.AdditiveBlending
                 })
             );
+            group.add(halo);
+
+            scene.add(group);
+            return group;
+        }
+
+        // S13: Pulsing Sun
+        function createPulsingSun(scene) {
+            const group = new THREE.Group();
+
+            const coreTexture = createPlasmaTexture(
+                (value) => {
+                    const r = 255;
+                    const g = Math.floor(107 + value * 100);
+                    const b = Math.floor(53 + value * 50);
+                    return `rgb(${r}, ${g}, ${b})`;
+                },
+                (dist, angle) => Math.sin(dist * 0.08 + angle * 4)
+            );
+
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.4, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    map: coreTexture,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 2.5,
+                    emissiveMap: coreTexture
+                })
+            );
+            core.userData.isCore = true;
+            core.userData.rotSpeed = 0.5;
+            core.userData.pulsing = true;
+            group.add(core);
+
+            const halo = new THREE.Mesh(
+                new THREE.SphereGeometry(0.7, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    color: 0xFF6B35,
+                    transparent: true,
+                    opacity: 0.3,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            halo.userData.pulsing = true;
+            group.add(halo);
+
+            scene.add(group);
+            return group;
+        }
+
+        // S14: Dual Core Sun
+        function createDualCoreSun(scene) {
+            const group = new THREE.Group();
+
+            // Inner core
+            const coreTexture1 = createPlasmaTexture(
+                (value) => {
+                    const r = 255;
+                    const g = Math.floor(107 + value * 100);
+                    const b = Math.floor(53 + value * 50);
+                    return `rgb(${r}, ${g}, ${b})`;
+                },
+                (dist, angle) => Math.sin(dist * 0.08 + angle * 4)
+            );
+
+            const core1 = new THREE.Mesh(
+                new THREE.SphereGeometry(0.3, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    map: coreTexture1,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 3.0,
+                    emissiveMap: coreTexture1
+                })
+            );
+            core1.userData.isCore = true;
+            core1.userData.rotSpeed = 0.5;
+            group.add(core1);
+
+            // Outer core layer
+            const coreTexture2 = createPlasmaTexture(
+                (value) => {
+                    const r = 255;
+                    const g = Math.floor(107 + value * 100);
+                    const b = Math.floor(53 + value * 50);
+                    return `rgba(${r}, ${g}, ${b}, 0.6)`;
+                },
+                (dist, angle) => Math.sin(angle * 5 + dist * 0.1)
+            );
+
+            const core2 = new THREE.Mesh(
+                new THREE.SphereGeometry(0.45, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    map: coreTexture2,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 2.0,
+                    emissiveMap: coreTexture2,
+                    transparent: true
+                })
+            );
+            core2.userData.isCore = true;
+            core2.userData.rotSpeed = -0.3;
+            group.add(core2);
+
+            const halo = new THREE.Mesh(
+                new THREE.SphereGeometry(0.7, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    color: 0xFF6B35,
+                    transparent: true,
+                    opacity: 0.3,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            group.add(halo);
+
+            scene.add(group);
+            return group;
+        }
+
+        // S15: Giant Sun
+        function createGiantSun(scene) {
+            const group = new THREE.Group();
+
+            const coreTexture = createPlasmaTexture(
+                (value) => {
+                    const r = 255;
+                    const g = Math.floor(107 + value * 100);
+                    const b = Math.floor(53 + value * 50);
+                    return `rgb(${r}, ${g}, ${b})`;
+                },
+                (dist, angle) => Math.sin(dist * 0.08 + angle * 4)
+            );
+
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.5, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    map: coreTexture,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 2.5,
+                    emissiveMap: coreTexture
+                })
+            );
+            core.userData.isCore = true;
+            core.userData.rotSpeed = 0.5;
+            group.add(core);
+
+            const halo = new THREE.Mesh(
+                new THREE.SphereGeometry(0.85, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    color: 0xFF6B35,
+                    transparent: true,
+                    opacity: 0.4,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            group.add(halo);
+
+            scene.add(group);
+            return group;
+        }
+
+        // S16: Perfect Sun
+        function createPerfectSun(scene) {
+            const group = new THREE.Group();
+
+            const coreTexture = createPlasmaTexture(
+                (value) => {
+                    const r = 255;
+                    const g = Math.floor(107 + value * 100);
+                    const b = Math.floor(53 + value * 50);
+                    return `rgb(${r}, ${g}, ${b})`;
+                },
+                (dist, angle) => Math.sin(dist * 0.08 + angle * 4)
+            );
+
+            const core = new THREE.Mesh(
+                new THREE.SphereGeometry(0.42, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    map: coreTexture,
+                    emissive: 0xFF6B35,
+                    emissiveIntensity: 2.8,
+                    emissiveMap: coreTexture
+                })
+            );
+            core.userData.isCore = true;
+            core.userData.rotSpeed = 0.5;
+            core.userData.pulsing = true;
+            group.add(core);
+
+            const halo = new THREE.Mesh(
+                new THREE.SphereGeometry(0.72, 32, 32),
+                new THREE.MeshBasicMaterial({
+                    color: 0xFF6B35,
+                    transparent: true,
+                    opacity: 0.35,
+                    blending: THREE.AdditiveBlending
+                })
+            );
+            halo.userData.pulsing = true;
             group.add(halo);
 
             scene.add(group);
@@ -3321,234 +937,80 @@
             const time = performance.now() * 0.001;
 
             sphereGroup.traverse(child => {
-                if (child.userData.isCore) {
-                    const pulseSpeed = child.userData.pulseFast ? 2.0 : 1.2;
-                    let minIntensity = 1.0;
-                    let maxIntensity = 3.0;
+                if (child.userData.isCore && child.userData.rotSpeed) {
+                    child.rotation.y = time * child.userData.rotSpeed;
+                    child.rotation.x = time * child.userData.rotSpeed * 0.6;
 
-                    if (child.userData.pulseDramatic) {
-                        minIntensity = 0.2;
-                        maxIntensity = 4.0;
-                    }
-
-                    const intensity = minIntensity + (maxIntensity - minIntensity) *
-                                    (0.5 + 0.5 * Math.sin(time * pulseSpeed));
-                    if (child.material.emissive) {
-                        child.material.emissiveIntensity = intensity;
-                    }
-                }
-
-                if (child.userData.isPulsing) {
-                    let pulseAmount = 0.15;
-                    let pulseSpeed = 1.2;
-
-                    if (child.userData.largeScale) pulseAmount = 0.25;
-                    if (child.userData.wobble) {
-                        child.scale.x = 1.0 + Math.sin(time * 1.2) * 0.15;
-                        child.scale.y = 1.0 + Math.sin(time * 1.4) * 0.15;
-                        child.scale.z = 1.0 + Math.sin(time * 1.1) * 0.15;
-                        return;
-                    }
-                    if (child.userData.elastic) {
-                        pulseAmount = 0.3;
-                        pulseSpeed = 0.8;
-
-                        // Set 3 elastic variations
-                        if (child.userData.fastSpeed) {
-                            pulseSpeed = 1.5;
-                        } else if (child.userData.gentle) {
-                            pulseAmount = 0.2;
-                            pulseSpeed = 0.5;
-                        } else if (child.userData.extreme) {
-                            pulseAmount = 0.5;
-                        } else if (child.userData.damped) {
-                            const decay = Math.exp(-time * 0.2);
-                            pulseAmount = 0.3 * (0.5 + 0.5 * decay);
-                        } else if (child.userData.spring) {
-                            // Spring effect: sin(t) * exp(-damping*t)
-                            const damping = 0.3;
-                            const decay = Math.exp(-damping * (time % 10));
-                            pulseAmount = 0.4 * decay;
-                            pulseSpeed = 2.0;
+                    if (child.userData.pulsing) {
+                        const intensity = 2.0 + Math.sin(time * 1.5) * 0.8;
+                        if (child.material.emissiveIntensity) {
+                            child.material.emissiveIntensity = intensity;
                         }
                     }
-                    if (child.userData.breath) {
-                        pulseAmount = 0.1;
-                        pulseSpeed = 0.6;
-                    }
+                }
 
-                    const scale = 1.0 + Math.sin(time * pulseSpeed) * pulseAmount;
+                if (child.userData.pulsing && !child.userData.isCore) {
+                    const scale = 1.0 + Math.sin(time * 1.5) * 0.15;
                     child.scale.setScalar(scale);
-                }
-
-                if (child.userData.isParticles) {
-                    if (child.userData.slowMotion) {
-                        child.rotation.y = time * 0.1;
-                    } else if (child.userData.flowPattern) {
-                        child.rotation.y = time * 0.5;
-                    } else if (child.userData.burstPattern) {
-                        const scale = 1.0 + Math.sin(time * 1.5) * 0.3;
-                        child.scale.setScalar(scale);
-                    } else if (child.userData.rotating) {
-                        // Set 3: Rotating shell particles
-                        child.rotation.x = time * 0.4;
-                        child.rotation.y = time * 0.3;
-                    } else if (child.userData.radialPulse) {
-                        // Set 3: Pulsing shell particles
-                        const scale = 1.0 + Math.sin(time * 1.2) * 0.2;
-                        child.scale.setScalar(scale);
-                    } else if (child.userData.layerSpeed) {
-                        // Set 3: Layered shell with per-layer speed
-                        child.rotation.y = time * child.userData.layerSpeed;
-                    } else {
-                        child.rotation.x = time * 0.3;
-                        child.rotation.y = time * 0.2;
-                    }
-                }
-
-                if (child.userData.isRing) {
-                    if (child.userData.rotating) {
-                        child.rotation.z += 0.01;
-                    }
-                    if (child.userData.glowing && child.material.emissive) {
-                        const intensity = 1.5 + Math.sin(time * 1.2) * 0.8;
-                        child.material.emissiveIntensity = intensity;
-                    }
-                }
-
-                // Set 5: Plasma effects animations
-                if (child.userData.rotatingHalo) {
-                    if (child.userData.reverseRotation) {
-                        child.rotation.z = -time * 0.3;
-                    } else {
-                        child.rotation.z = time * 0.3;
-                    }
-                }
-
-                if (child.userData.fastPulse && child.userData.isPulsing) {
-                    const scale = 1.0 + Math.sin(time * 2.0) * 0.25;
-                    child.scale.setScalar(scale);
-                }
-
-                if (child.userData.flowingPlasma) {
-                    // Animate texture offset for flowing effect
-                    child.rotation.y = time * 0.15;
-                }
-
-                if (child.userData.morphingPlasma) {
-                    // Morph between patterns by rotating and scaling
-                    child.rotation.x = Math.sin(time * 0.3) * 0.2;
-                    child.rotation.y = time * 0.2;
-                    const morphScale = 1.0 + Math.sin(time * 0.4) * 0.1;
-                    child.scale.setScalar(morphScale);
-                }
-
-                if (child.userData.rotatingCore) {
-                    child.rotation.y = time * 0.5;
-                    child.rotation.x = time * 0.3;
                 }
             });
 
-            sphereGroup.rotation.y += 0.005;
-
+            sphereGroup.rotation.y += 0.003;
             sceneData.renderer.render(sceneData.scene, sceneData.camera);
         }
 
-        function loadSet(setIndex) {
-            currentSetIndex = setIndex;
-            const set = designSets[setIndex];
-
-            // Clear existing scenes
-            activeScenes.forEach(data => {
-                data.renderer.dispose();
-            });
-            activeScenes = [];
-
-            // Clear grid
+        function init() {
             const gridContainer = document.getElementById('grid-container');
-            gridContainer.innerHTML = '';
 
-            // Update header
-            document.getElementById('current-set').textContent = setIndex + 1;
-            document.getElementById('total-sets').textContent = designSets.length;
-
-            // Update navigation buttons
-            document.getElementById('prev-set-btn').disabled = setIndex === 0;
-            document.getElementById('next-set-btn').disabled = setIndex === designSets.length - 1;
-
-            // Create cards for current set
-            set.designs.forEach(design => {
+            designs.forEach(design => {
                 const card = document.createElement('div');
                 card.className = 'sphere-card';
                 card.dataset.id = design.id;
 
-                const badge = document.createElement('div');
-                badge.className = 'selection-badge';
-                badge.textContent = '✓';
+                const title = document.createElement('h3');
+                title.textContent = `${design.id}: ${design.name}`;
+
+                const tech = document.createElement('div');
+                tech.className = 'tech';
+                tech.textContent = design.tech;
 
                 const canvas = document.createElement('canvas');
-                canvas.width = 400;
-                canvas.height = 400;
+                canvas.width = 300;
+                canvas.height = 250;
 
-                const info = document.createElement('div');
-                info.className = 'sphere-info';
-                info.innerHTML = `
-                    <div class="sphere-id">${design.id}</div>
-                    <div class="sphere-name">${design.name}</div>
-                    <div class="sphere-tech">${design.tech}</div>
-                `;
-
-                card.appendChild(badge);
+                card.appendChild(title);
+                card.appendChild(tech);
                 card.appendChild(canvas);
-                card.appendChild(info);
                 gridContainer.appendChild(card);
 
                 const sceneData = setupScene(canvas);
                 const sphereGroup = design.create(sceneData.scene);
-                activeScenes.push({ ...sceneData, sphereGroup, canvas, id: design.id });
+
+                function animateLoop() {
+                    requestAnimationFrame(animateLoop);
+                    animate(sceneData, sphereGroup);
+                }
+                animateLoop();
+
+                activeScenes.push({ ...sceneData, sphereGroup });
 
                 card.addEventListener('click', () => {
-                    card.classList.toggle('selected');
-                    if (card.classList.contains('selected')) {
-                        selectedDesigns.add(design.id);
-                    } else {
+                    if (selectedDesigns.has(design.id)) {
                         selectedDesigns.delete(design.id);
+                        card.classList.remove('selected');
+                    } else {
+                        selectedDesigns.add(design.id);
+                        card.classList.add('selected');
                     }
                     updateSelectionCount();
                 });
             });
-
-            // Clear selection for new set
-            selectedDesigns.clear();
-            updateSelectionCount();
         }
 
         function updateSelectionCount() {
-            const count = selectedDesigns.size;
-            document.getElementById('selected-count').textContent = count;
-            document.getElementById('show-selected-btn').disabled = count === 0;
+            document.getElementById('selected-count').textContent = selectedDesigns.size;
+            document.getElementById('show-selected-btn').disabled = selectedDesigns.size === 0;
         }
-
-        // Animation loop
-        function render() {
-            activeScenes.forEach(data => {
-                animate(data, data.sphereGroup);
-            });
-            requestAnimationFrame(render);
-        }
-
-        // Event listeners
-        document.getElementById('prev-set-btn').addEventListener('click', () => {
-            if (currentSetIndex > 0) {
-                loadSet(currentSetIndex - 1);
-            }
-        });
-
-        document.getElementById('next-set-btn').addEventListener('click', () => {
-            if (currentSetIndex < designSets.length - 1) {
-                loadSet(currentSetIndex + 1);
-            }
-        });
 
         document.getElementById('clear-btn').addEventListener('click', () => {
             selectedDesigns.clear();
@@ -3559,17 +1021,15 @@
         });
 
         document.getElementById('show-selected-btn').addEventListener('click', () => {
-            const ids = Array.from(selectedDesigns).join(', ');
-            alert(`Selected designs: ${ids}`);
+            const selected = Array.from(selectedDesigns).join(', ');
+            alert(`Selected designs: ${selected}`);
         });
 
         document.getElementById('back-game-btn').addEventListener('click', () => {
             window.location.href = 'index.html';
         });
 
-        // Initialize
-        loadSet(0);
-        render();
+        init();
     </script>
 </body>
 </html>
