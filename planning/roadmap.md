@@ -1,6 +1,6 @@
 # Pyramids - Development Roadmap
 
-**Last Updated**: 2025-10-27
+**Last Updated**: 2025-10-30
 **Project Start**: 2025-10-27
 
 ---
@@ -11,33 +11,45 @@ Build a minimalist real-time strategy game with light-based mechanics, starting 
 
 ---
 
-## Phase 1: MVP - Single Layer Puzzle (Target: 2-4 hours)
+## Phase 1: MVP - Single Layer Puzzle ✅ COMPLETE
 
 **Goal**: Prove core mechanic is fun and visually appealing
 
-### Features
-✅ Static scene with 7 glowing spheres
+### Core Features (All Complete)
+✅ Static scene with 7 glowing spheres (cellular plasma texture)
 ✅ Dark minimalist aesthetic (Osmos-inspired)
 ✅ Click sphere → click target → create connection
-✅ Visual pulse stream between connected spheres
-✅ Energy transfer with distance attenuation
-✅ Gradual color interpolation (neutral → player)
+✅ Visual pulse streams with particle trails + glow effects
+✅ Energy transfer with distance attenuation (inverse square)
+✅ Gradual color interpolation (neutral → player, stepped for performance)
 ✅ Victory condition: All spheres owned
 ✅ Mouse + touch input support
+✅ Camera controls: pan (middle-click), rotate (right-click), zoom (wheel)
 
-### Success Criteria
-- Game runs at 60 FPS on mid-range hardware
-- Visual aesthetic matches Osmos inspiration
-- Core mechanic feels satisfying to play
-- 5-minute playtest provides clear feedback on fun factor
+### Bonus Features Added
+✅ Theme system (5 color schemes: default, sunset, forest, ocean, neon)
+✅ Starfield background (150 twinkling stars)
+✅ Shadow projections (subtle cyan glow under spheres)
+✅ Sphere hover tooltips (owner, energy, connections)
+✅ HUD (sphere count, connections, selected sphere info)
+✅ Reset view button
+✅ Selection visual (pulsing glow, no rings per user preference)
+✅ Impact effects (burst particles, rotation boost on energy arrival)
 
-### Implementation Order
-1. **Phase 1.1** (30 min): Static Three.js scene + 7 spheres with glow
-2. **Phase 1.2** (20 min): Sphere + GameState data model
-3. **Phase 1.3** (30 min): Click detection and sphere selection
-4. **Phase 1.4** (40 min): Connection system with pulse visualization
-5. **Phase 1.5** (30 min): Energy transfer game loop
-6. **Phase 1.6** (40 min): Victory condition + visual polish
+### Success Criteria - All Met
+✅ Game runs at 60 FPS on mid-range hardware
+✅ Visual aesthetic matches Osmos inspiration
+✅ Core mechanic feels satisfying to play
+⏳ 5-minute playtest needed for external validation
+
+### Key Design Decisions
+- **Cellular plasma texture** for sphere cores (procedural, cached for performance)
+- **Stepped color interpolation** (25/50/75% thresholds) vs smooth gradients (reduces texture regeneration)
+- **No Saturn rings** on selection/capture (user preference for cleaner look)
+- **Mesh-based starfield** (not point particles) for guaranteed visibility
+- **3D camera controls** added early (pan/rotate/zoom) for enhanced spatial feel
+- **One connection per sphere** rule (strategic constraint)
+- **Inverse square attenuation** for energy transfer (realistic falloff)
 
 ---
 
@@ -305,8 +317,8 @@ Build a minimalist real-time strategy game with light-based mechanics, starting 
 
 | Phase | Duration | Features | Status |
 |-------|----------|----------|--------|
-| Phase 1: MVP | 2-4 hours | Single-layer puzzle core | 🔄 In Progress |
-| Phase 2: Campaign | 1-2 weeks | 10-15 puzzle levels | ⏳ Planned |
+| Phase 1: MVP | 2-4 hours | Single-layer puzzle core + polish | ✅ Complete |
+| Phase 2: Campaign | 1-2 weeks | 10-15 puzzle levels | ⏳ Next |
 | Phase 3: Multi-Layer | 2-3 weeks | Pyramid layer system | ⏳ Planned |
 | Phase 4: AI Skirmish | 2-3 weeks | Real-time vs AI | ⏳ Planned |
 | Phase 5: Events | 1 week | Random events system | ⏳ Planned |
@@ -346,10 +358,11 @@ Build a minimalist real-time strategy game with light-based mechanics, starting 
 
 1. ✅ Create repository structure
 2. ✅ Write planning documentation
-3. 🔄 Implement Phase 1.1: Static scene
-4. ⏳ Complete MVP phases 1.2-1.6
-5. ⏳ Playtest MVP with 5+ users
+3. ✅ Implement Phase 1.1-1.6: Complete MVP
+4. ✅ Add polish features (themes, starfield, camera controls)
+5. 🔄 Playtest MVP with 5+ users
 6. ⏳ Iterate based on feedback
 7. ⏳ Decide go/no-go for Phase 2
+8. ⏳ If GO: Begin Phase 2 (Level system + 10-15 puzzles)
 
-**Current Focus**: Getting MVP working and playable as fast as possible to validate core mechanic.
+**Current Focus**: MVP complete and ready for playtesting. Next: validate core mechanic with users, then begin Phase 2 puzzle campaign.

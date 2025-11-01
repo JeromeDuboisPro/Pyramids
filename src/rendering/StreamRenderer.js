@@ -98,8 +98,9 @@ export class StreamRenderer {
             target: target,
             createdAt: performance.now(),
             lastParticleTime: 0,
-            activeParticles: [],  // Array of {mesh, progress, speed}
+            activeParticles: [],  // Array of {mesh, progress, speed, lastTrailTime}
             burstEffects: [],     // Array of burst effect meshes
+            trailSegments: [],    // Array of trail segment meshes
             color: tubeColor
         });
 
@@ -129,6 +130,33 @@ export class StreamRenderer {
         stream.group.add(particle);
 
         return particle;
+    }
+
+    /**
+     * Create trail segment for particle
+     * @param {THREE.Vector3} position - Trail segment position
+     * @param {number} color - Trail color
+     * @param {Object} stream - Stream data
+     * @returns {THREE.Mesh} Trail segment
+     */
+    createTrailSegment(position, color, stream) {
+        const trailGeometry = new THREE.SphereGeometry(0.08, 8, 8);
+        const trailMaterial = new THREE.MeshBasicMaterial({
+            color: color,
+            transparent: true,
+            opacity: 0.6,
+            blending: THREE.AdditiveBlending
+        });
+
+        const trail = new THREE.Mesh(trailGeometry, trailMaterial);
+        trail.position.copy(position);
+        trail.userData.lifetime = 0.3; // 300ms fade
+        trail.userData.age = 0;
+        trail.userData.initialOpacity = 0.6;
+
+        stream.group.add(trail);
+
+        return trail;
     }
 
     /**
@@ -218,6 +246,12 @@ export class StreamRenderer {
             if (burst.material) burst.material.dispose();
         });
 
+        // Dispose trail segments
+        stream.trailSegments.forEach(trail => {
+            if (trail.geometry) trail.geometry.dispose();
+            if (trail.material) trail.material.dispose();
+        });
+
         // Remove from scene
         this.scene.remove(stream.group);
 
@@ -247,7 +281,8 @@ export class StreamRenderer {
                 stream.activeParticles.push({
                     mesh: particle,
                     progress: 0.0,
-                    speed: 1.0 / travelTime  // Progress per second
+                    speed: 1.0 / travelTime,  // Progress per second
+                    lastTrailTime: this.time
                 });
                 stream.lastParticleTime = this.time;
             }
@@ -257,6 +292,9 @@ export class StreamRenderer {
 
             // Animate burst effects
             this.animateBurstEffects(stream, deltaTime);
+
+            // Animate trail segments
+            this.animateTrailSegments(stream, deltaTime);
 
             // Animate tube pulsing
             const pulseSpeed = 2.0;
@@ -297,6 +335,15 @@ export class StreamRenderer {
                 // Update particle position along curve
                 const position = stream.curve.getPoint(particleData.progress);
                 particleData.mesh.position.copy(position);
+
+                // Spawn trail segments at intervals
+                const trailInterval = 0.05; // Every 50ms
+                const timeSinceLastTrail = this.time - particleData.lastTrailTime;
+                if (timeSinceLastTrail >= trailInterval) {
+                    const trail = this.createTrailSegment(position, stream.color, stream);
+                    stream.trailSegments.push(trail);
+                    particleData.lastTrailTime = this.time;
+                }
 
                 // Particle pulsing effect
                 const pulseSpeed = 5.0;
@@ -346,6 +393,41 @@ export class StreamRenderer {
         // Remove expired bursts
         for (let i = burstsToRemove.length - 1; i >= 0; i--) {
             stream.burstEffects.splice(burstsToRemove[i], 1);
+        }
+    }
+
+    /**
+     * Animate trail segments (fade out)
+     * @param {Object} stream - Stream data
+     * @param {number} deltaTime - Time since last frame
+     */
+    animateTrailSegments(stream, deltaTime) {
+        const trailsToRemove = [];
+
+        stream.trailSegments.forEach((trail, index) => {
+            trail.userData.age += deltaTime;
+
+            const agePercent = trail.userData.age / trail.userData.lifetime;
+
+            if (agePercent >= 1.0) {
+                // Trail expired
+                trailsToRemove.push(index);
+                trail.geometry.dispose();
+                trail.material.dispose();
+                stream.group.remove(trail);
+            } else {
+                // Fade out trail
+                trail.material.opacity = trail.userData.initialOpacity * (1.0 - agePercent);
+
+                // Shrink slightly
+                const scale = 1.0 - agePercent * 0.3;
+                trail.scale.setScalar(scale);
+            }
+        });
+
+        // Remove expired trails
+        for (let i = trailsToRemove.length - 1; i >= 0; i--) {
+            stream.trailSegments.splice(trailsToRemove[i], 1);
         }
     }
 

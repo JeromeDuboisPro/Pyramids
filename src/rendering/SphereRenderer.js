@@ -226,33 +226,22 @@ export class SphereRenderer {
 
         // Core always exists now (added in createSphere), just update intensity above
 
-        // Add or remove point light and halo based on fully owned state
+        // Add or remove point light based on fully owned state (no halo rings)
         if (isFullyOwned && !hasLight) {
-            // Becoming fully owned, add point light and halo
+            // Becoming fully owned, add point light only (no halo ring)
             const pointLight = new THREE.PointLight(newColor, 1.5, 8);
             pointLight.position.set(0, 0, 0);
             sphereGroup.add(pointLight);
-
-            const radius = CONFIG.SPHERE_RADIUS;
-            const haloGeometry = new THREE.RingGeometry(radius * 1.1, radius * 1.6, 32);
-            const haloMaterial = new THREE.MeshBasicMaterial({
-                color: newColor,
-                transparent: true,
-                opacity: 0.3,
-                side: THREE.DoubleSide,
-                blending: THREE.AdditiveBlending
-            });
-            const haloMesh = new THREE.Mesh(haloGeometry, haloMaterial);
-            haloMesh.rotation.x = Math.PI / 2;
-            haloMesh.userData.isHalo = true;
-            sphereGroup.add(haloMesh);
-        } else if (!isFullyOwned && (hasLight || hasHalo)) {
-            // No longer fully owned, remove point light and halo
+        } else if (!isFullyOwned && hasLight) {
+            // No longer fully owned, remove point light
             const lightToRemove = sphereGroup.children.find(child => child.isLight);
             if (lightToRemove) {
                 sphereGroup.remove(lightToRemove);
             }
+        }
 
+        // Clean up any existing halos (from old version)
+        if (hasHalo) {
             const haloToRemove = sphereGroup.children.find(child => child.userData.isHalo);
             if (haloToRemove) {
                 haloToRemove.geometry.dispose();
@@ -303,7 +292,7 @@ export class SphereRenderer {
     }
 
     /**
-     * Add selection indicator to sphere (multi-layer pulsing effect)
+     * Add selection indicator to sphere (subtle pulsing glow)
      * @param {THREE.Group} sphereGroup - Sphere to select
      */
     addSelectionOutline(sphereGroup) {
@@ -319,46 +308,12 @@ export class SphereRenderer {
             sphereColor = shellMesh.material.color.getHex();
         }
 
-        // Outer pulsing ring (bright white for high visibility)
-        const outerRingGeometry = new THREE.RingGeometry(radius * 1.2, radius * 1.8, 32);
-        const outerRingMaterial = new THREE.MeshBasicMaterial({
-            color: 0xFFFFFF,  // Bright white for maximum visibility
-            transparent: true,
-            opacity: 0.8,  // High opacity
-            side: THREE.DoubleSide,
-            blending: THREE.AdditiveBlending
-        });
-
-        const outerRing = new THREE.Mesh(outerRingGeometry, outerRingMaterial);
-        outerRing.rotation.x = Math.PI / 2; // Lay flat
-        outerRing.userData.isSelectionHalo = true;
-        outerRing.userData.isPulsing = true;
-        outerRing.userData.pulseType = 'outer'; // Fast pulse
-        sphereGroup.add(outerRing);
-
-        // Inner ring (sphere color for context)
-        const innerRingGeometry = new THREE.RingGeometry(radius * 1.0, radius * 1.15, 32);
-        const innerRingMaterial = new THREE.MeshBasicMaterial({
-            color: sphereColor,
-            transparent: true,
-            opacity: 0.6,
-            side: THREE.DoubleSide,
-            blending: THREE.AdditiveBlending
-        });
-
-        const innerRing = new THREE.Mesh(innerRingGeometry, innerRingMaterial);
-        innerRing.rotation.x = Math.PI / 2;
-        innerRing.userData.isSelectionHalo = true;
-        innerRing.userData.isPulsing = true;
-        innerRing.userData.pulseType = 'inner'; // Slower pulse for variety
-        sphereGroup.add(innerRing);
-
-        // Outer glow sphere (subtle pulsing aura)
-        const glowSphereGeometry = new THREE.SphereGeometry(radius * 1.4, 32, 32);
+        // Outer glow sphere (pulsing aura only, no rings)
+        const glowSphereGeometry = new THREE.SphereGeometry(radius * 1.3, 32, 32);
         const glowSphereMaterial = new THREE.MeshBasicMaterial({
             color: 0xFFFFFF,
             transparent: true,
-            opacity: 0.15,  // Very subtle
+            opacity: 0.2,  // Subtle but visible
             blending: THREE.AdditiveBlending,
             side: THREE.BackSide  // Only visible from outside
         });

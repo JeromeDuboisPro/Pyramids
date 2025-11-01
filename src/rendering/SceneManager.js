@@ -8,6 +8,7 @@
 import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
 import { SphereRenderer } from './SphereRenderer.js';
 import { StreamRenderer } from './StreamRenderer.js';
+import { StarfieldRenderer } from './StarfieldRenderer.js';
 import { CONFIG } from '../main.js';
 
 export class SceneManager {
@@ -25,6 +26,10 @@ export class SceneManager {
 
         // Stream renderer for connections
         this.streamRenderer = new StreamRenderer(this.scene);
+
+        // Starfield background
+        this.starfieldRenderer = new StarfieldRenderer(this.scene);
+        this.starfieldRenderer.createStarfield(150);
 
         // Store sphere meshes for animation
         this.sphereMeshes = [];
@@ -99,6 +104,7 @@ export class SceneManager {
 
         console.log('✅ Lighting initialized');
     }
+
 
     /**
      * Create visual spheres from GameState
@@ -233,6 +239,9 @@ export class SceneManager {
 
         // Animate connection streams
         this.streamRenderer.animate(deltaTime);
+
+        // Animate starfield
+        this.starfieldRenderer.animate(deltaTime);
     }
 
     /**

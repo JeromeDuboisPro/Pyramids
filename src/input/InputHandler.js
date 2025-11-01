@@ -482,6 +482,38 @@ export class InputHandler {
     }
 
     /**
+     * Reset camera view to default position, zoom, and rotation
+     */
+    resetView() {
+        // Reset camera position to top-down view
+        this.camera.position.set(0, 0, 20);
+        this.camera.lookAt(0, 0, 0);
+        this.camera.up.set(0, 0, 1);
+
+        // Reset zoom level
+        this.zoomLevel = 1.0;
+        const aspect = window.innerWidth / window.innerHeight;
+        const baseViewSize = 10;
+        const viewSize = baseViewSize / this.zoomLevel;
+
+        this.camera.left = -viewSize * aspect;
+        this.camera.right = viewSize * aspect;
+        this.camera.top = viewSize;
+        this.camera.bottom = -viewSize;
+        this.camera.updateProjectionMatrix();
+
+        // Reset rotation angles
+        this.cameraTheta = 0;
+        this.cameraPhi = 0;
+        this.cameraDistance = 20;
+
+        // Reset rotation pivot
+        this.rotationPivot.set(0, 0, 0);
+
+        console.log('🎯 Camera view reset to default');
+    }
+
+    /**
      * Cleanup event listeners
      */
     dispose() {

@@ -91,6 +91,14 @@ class Game {
         // Setup restart button
         this.restartBtn.addEventListener('click', this.restart);
 
+        // Setup reset view button
+        const resetViewBtn = document.getElementById('reset-view-btn');
+        if (resetViewBtn) {
+            resetViewBtn.addEventListener('click', () => {
+                this.inputHandler.resetView();
+            });
+        }
+
         // Hide loading screen
         this.loading.classList.add('hidden');
 
